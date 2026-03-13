@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -105,11 +105,33 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .elec-ok{color:var(--green)}.elec-warn{color:var(--acc3)}.elec-bad{color:var(--red)}
 
 /* BOTTOM */
-#bot{background:var(--p1);border-top:2px solid var(--b1);height:33px;display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0;z-index:20}
+#bot{background:var(--p1);border-top:2px solid var(--b1);height:36px;display:flex;align-items:center;padding:0 8px;gap:4px;flex-shrink:0;z-index:20}
 .bbot{background:var(--p2);border:1px solid var(--b1);color:var(--t1);font-family:var(--font);font-size:6px;padding:4px 8px;cursor:pointer;border-radius:2px;transition:.1s;white-space:nowrap}
 .bbot:hover{border-color:var(--acc)}.bbot.pri{border-color:var(--acc);color:#fff}.bbot.pri:hover{background:var(--acc)}
 .bbot.dng{border-color:var(--red);color:var(--red)}.bbot.dng:hover{background:var(--red);color:#fff}
+.bbot.spd{border-color:var(--b2);color:var(--t2);min-width:28px;text-align:center;padding:4px 6px}
+.bbot.spd:hover{border-color:var(--acc2);color:var(--acc2)}
+.bbot.spd.active{border-color:var(--acc2);color:var(--acc2);background:#0a1e1a}
+#speed-label{font-size:5px;color:var(--t3);padding:0 4px;border-right:1px solid var(--b1);margin-right:2px}
 #tool-disp{font-size:5px;color:var(--t2);margin-left:4px}
+#sim-time{font-size:6px;color:var(--gold);margin-left:6px;white-space:nowrap}
+
+/* TUTORIAL OVERLAY */
+#tuto-overlay{position:fixed;inset:0;background:rgba(3,5,8,0.92);z-index:500;display:flex;align-items:center;justify-content:center}
+#tuto-box{background:var(--p1);border:2px solid var(--acc);border-radius:8px;width:520px;max-height:90vh;overflow-y:auto;padding:20px;position:relative}
+#tuto-box h2{font-size:10px;color:var(--acc);margin-bottom:12px;text-align:center}
+.tuto-step{display:none}.tuto-step.active{display:block}
+.tuto-title{font-size:8px;color:var(--acc2);margin-bottom:8px}
+.tuto-body{font-size:6px;color:var(--t1);line-height:2.2;margin-bottom:10px}
+.tuto-body b{color:var(--gold)}
+.tuto-body .tip{background:var(--p2);border-left:2px solid var(--acc);padding:5px 8px;margin:6px 0;border-radius:0 2px 2px 0;display:block}
+.tuto-img{font-size:28px;text-align:center;margin:8px 0}
+.tuto-nav{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--b1)}
+.tuto-dots{display:flex;gap:5px}
+.tuto-dot{width:8px;height:8px;border-radius:50%;background:var(--b2);cursor:pointer;transition:.2s}
+.tuto-dot.on{background:var(--acc)}
+.tnav-btn{background:var(--p2);border:1px solid var(--b1);color:var(--t1);font-family:var(--font);font-size:6px;padding:5px 12px;cursor:pointer;border-radius:2px;transition:.1s}
+.tnav-btn:hover{border-color:var(--acc)}.tnav-btn.ok{border-color:var(--green);color:var(--green)}
 
 /* TOAST */
 #toasts{position:fixed;bottom:43px;right:8px;z-index:100;display:flex;flex-direction:column;gap:4px;max-width:220px}
@@ -198,15 +220,137 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 </div>
 
 <div id="bot">
-  <button class="bbot pri" onclick="nextTurn()">▶ TOUR SUIVANT</button>
-  <button class="bbot" onclick="toggleAuto()">⏱ <span id="auto-lbl">OFF</span></button>
-  <button class="bbot" onclick="openSaveMenu()">💾 SAUVEGARDES</button>
+  <span id="speed-label">VITESSE</span>
+  <button class="bbot spd active" id="spd-0" onclick="setSpeed(0)" title="Pause">⏸</button>
+  <button class="bbot spd" id="spd-1" onclick="setSpeed(1)" title="Lente">▶</button>
+  <button class="bbot spd" id="spd-2" onclick="setSpeed(2)" title="Normale">▶▶</button>
+  <button class="bbot spd" id="spd-3" onclick="setSpeed(3)" title="Rapide">▶▶▶</button>
+  <button class="bbot spd" id="spd-4" onclick="setSpeed(4)" title="Turbo">⚡</button>
+  <span id="sim-time">T1 · 🌱</span>
   <span id="tool-disp">Outil: <span id="tl" style="color:var(--acc2)">MAISON</span></span>
-  <div style="margin-left:auto;font-size:5px;color:var(--t3)">Scroll/pinch: zoom · Clic-drag: déplacer</div>
-  <button class="bbot dng" onclick="resetGame()">🗑 RESET</button>
+  <div style="margin-left:auto;display:flex;gap:4px;align-items:center">
+    <button class="bbot" onclick="openTuto()">❓ AIDE</button>
+    <button class="bbot" onclick="openSaveMenu()">💾</button>
+    <button class="bbot dng" onclick="resetGame()">🗑</button>
+  </div>
 </div>
 
 <div id="toasts"></div>
+
+<!-- TUTORIAL OVERLAY -->
+<div id="tuto-overlay" style="display:none">
+  <div id="tuto-box">
+    <h2>🏙 PIXELMAYOR — GUIDE DU MAIRE</h2>
+
+    <div class="tuto-step active" id="ts-0">
+      <div class="tuto-title">👋 Bienvenue, Monsieur le Maire !</div>
+      <div class="tuto-img">🏙</div>
+      <div class="tuto-body">
+        Vous héritez d'un petit village. Votre mission : le transformer en une métropole prospère.<br><br>
+        La simulation tourne <b>en temps réel</b> — utilisez les boutons de vitesse en bas pour contrôler le déroulement du temps.<br><br>
+        <span class="tip">💡 Commencez par mettre sur <b>PAUSE ⏸</b> le temps de construire vos premiers bâtiments !</span>
+      </div>
+    </div>
+
+    <div class="tuto-step" id="ts-1">
+      <div class="tuto-title">⚡ L'ÉLECTRICITÉ — PRIORITÉ ABSOLUE</div>
+      <div class="tuto-img">⚡🏭☀️🌀</div>
+      <div class="tuto-body">
+        <b>Sans électricité, vos bâtiments ne fonctionnent qu'à 50% !</b><br><br>
+        Commencez par construire une source d'énergie :<br>
+        • <b>☀️ Solaire</b> — 800$ · 35 MW · propre mais faible<br>
+        • <b>🌀 Éolienne</b> — 1200$ · 60 MW · bon rapport qualité/prix<br>
+        • <b>⚡ Centrale</b> — 1800$ · 120 MW · polluante mais puissante<br>
+        • <b>☢️ Nucléaire</b> — 12000$ · 400 MW · à risque !<br><br>
+        <span class="tip">💡 L'électricité se propage via les <b>routes et les bâtiments adjacents</b>. Pas besoin de câbles séparés.</span>
+        <span class="tip">🌐 Vous pouvez aussi <b>importer</b> de l'électricité du marché mondial (coûteux) ou <b>exporter</b> votre surplus (revenus).</span>
+      </div>
+    </div>
+
+    <div class="tuto-step" id="ts-2">
+      <div class="tuto-title">🛣 LES ROUTES — ARTÈRES DE LA VILLE</div>
+      <div class="tuto-img">🛣🚗🚦</div>
+      <div class="tuto-body">
+        <b>Un bâtiment sans route n'est efficace qu'à 30% !</b><br><br>
+        Pour tracer des routes :<br>
+        1. Cliquez sur l'onglet <b>🛣</b> dans la barre gauche<br>
+        2. Cliquez-glissez sur la carte<br><br>
+        Coûts : <b>200$/case</b> (+400$ sur colline, +200$ en forêt)<br>
+        Entretien : <b>4$/case/tour</b> — attention aux grands réseaux !<br><br>
+        <span class="tip">⚠️ Trop de trafic = <b>bouchons</b> qui pénalisent le bonheur et l'économie. Construisez des transports (🚇🚉🚲) pour réduire la congestion.</span>
+      </div>
+    </div>
+
+    <div class="tuto-step" id="ts-3">
+      <div class="tuto-title">🏠 CONSTRUIRE SA VILLE</div>
+      <div class="tuto-img">🏠🏢🏪🏭🌳</div>
+      <div class="tuto-body">
+        Construisez dans cet ordre logique :<br><br>
+        1. <b>⚡ Énergie</b> d'abord (centrale/éolienne)<br>
+        2. <b>🛣 Routes</b> pour relier les quartiers<br>
+        3. <b>🏠 Résidentiel</b> pour attirer des habitants<br>
+        4. <b>🏪 Économie</b> pour créer des emplois et des revenus<br>
+        5. <b>🌳 Services</b> pour améliorer la qualité de vie<br><br>
+        <span class="tip">💡 <b>Les prix augmentent exponentiellement</b> (+20% par copie). Diversifiez plutôt que dupliquer !</span>
+        <span class="tip">⛰ Le terrain influence les coûts : collines et forêts coûtent plus cher. L'eau est inconstructible.</span>
+      </div>
+    </div>
+
+    <div class="tuto-step" id="ts-4">
+      <div class="tuto-title">💰 L'ÉCONOMIE — RESTER DANS LE VERT</div>
+      <div class="tuto-img">💰📈📉</div>
+      <div class="tuto-body">
+        Vos revenus viennent des <b>impôts</b> (onglet 💸) :<br>
+        • Impôt sur les habitants (taux réglable)<br>
+        • Taxe sur les entreprises<br><br>
+        Vos dépenses :<br>
+        • Entretien des bâtiments (croît avec chaque construction)<br>
+        • Entretien des routes (4$/case/tour)<br>
+        • Politiques actives (onglet 🏛)<br><br>
+        <span class="tip">⚠️ Un déficit prolongé vous ruine rapidement. Surveillez le <b>revenu net</b> dans la topbar !</span>
+        <span class="tip">📉 Les <b>bouchons</b> et les <b>pannes électriques</b> génèrent des pertes financières directes chaque tour.</span>
+      </div>
+    </div>
+
+    <div class="tuto-step" id="ts-5">
+      <div class="tuto-title">🎮 CONTRÔLES & INTERFACE</div>
+      <div class="tuto-img">🖱⌨️</div>
+      <div class="tuto-body">
+        <b>Carte :</b><br>
+        • <b>Molette</b> — zoom avant/arrière<br>
+        • <b>Alt + clic-glisser</b> — déplacer la vue<br>
+        • <b>Survol</b> — infos sur la case<br>
+        • Boutons +/−/⌂ en haut à droite<br><br>
+        <b>Vitesses :</b> ⏸ Pause · ▶ Lente · ▶▶ Normale · ▶▶▶ Rapide · ⚡ Turbo<br><br>
+        <b>Panneaux :</b><br>
+        • Gauche 🏗 — bâtiments · 🛣 routes · ⚡ énergie · 🔧 outils<br>
+        • Droite 📊 stats · 🚗 trafic · ⚡ électricité · 📈 courbes · 💸 fiscalité · 🏛 politiques<br><br>
+        <span class="tip">💾 Sauvegardez régulièrement ! La partie s'auto-sauvegarde toutes les 5 minutes de jeu.</span>
+      </div>
+    </div>
+
+    <div class="tuto-step" id="ts-6">
+      <div class="tuto-title">🌪 ÉVÉNEMENTS ALÉATOIRES</div>
+      <div class="tuto-img">🔥🌪💥⚡</div>
+      <div class="tuto-body">
+        Des événements surgissent régulièrement et demandent une décision :<br><br>
+        • <b>🔥 Incendie</b> — sans pompiers, un bâtiment brûle vraiment !<br>
+        • <b>🌪 Tornade</b> — peut détruire plusieurs bâtiments<br>
+        • <b>💥 Explosion</b> — zone industrielle à risque<br>
+        • <b>🎉 Festival</b> — opportunité de booster le bonheur<br>
+        • <b>🌱 Subvention</b> — aide financière de l'État<br>
+        • <b>⚡ Panne</b> — le réseau peut tomber<br><br>
+        <span class="tip">💡 Les événements s'affichent en bas à droite. Vous avez <b>20 secondes</b> pour décider avant qu'ils expirent !</span>
+      </div>
+    </div>
+
+    <div class="tuto-nav">
+      <button class="tnav-btn" id="tuto-prev" onclick="tutoNav(-1)">◀ Précédent</button>
+      <div class="tuto-dots" id="tuto-dots"></div>
+      <button class="tnav-btn" id="tuto-next" onclick="tutoNav(1)">Suivant ▶</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════
@@ -1098,7 +1242,7 @@ function nextTurn(){
 
   pushH();
   log(`Tour ${G.turn}: +${fmt(raw)}$ revenus | -${fmt(G.maint)}$ entretien | -${fmt(roadCost)}$ routes | -${fmt(polCost)}$ politiques = ${net>=0?'+':''}${fmt(net)}$`,net>=0?'info':'bad');
-  recalc();updateHUD();renderMap();
+  recalc();updateHUD();renderMap();updateSimTime();
   if(G.rtab===3)renderCharts();
   if(G.rtab===2)renderElecPane();
   if(G.rtab===1)renderTrafficPane();
@@ -1123,12 +1267,26 @@ function doEv(i,t){if(bstore[i])bstore[i]();if(t)t.remove();simTraffic();recalc(
 // ═══════════════════════════════════════
 // AUTO
 // ═══════════════════════════════════════
-const ASPD=[0,3000,1200,500];const ALBL=['OFF','x1','x2','x4'];
-function toggleAuto(){
-  G.autoMode=(G.autoMode+1)%4;
-  clearInterval(G.autoTimer);
-  if(G.autoMode>0)G.autoTimer=setInterval(nextTurn,ASPD[G.autoMode]);
-  document.getElementById('auto-lbl').textContent=ALBL[G.autoMode];
+// ═══════════════════════════════════════
+// SPEED CONTROL (real-time)
+// ═══════════════════════════════════════
+const SPEEDS=[0, 4000, 2000, 800, 200]; // ms per tick (0=pause)
+const SPEED_LABELS=['⏸','▶','▶▶','▶▶▶','⚡'];
+let _speedTimer=null;
+
+function setSpeed(s){
+  G.autoMode=s;
+  clearInterval(_speedTimer);_speedTimer=null;
+  if(s>0) _speedTimer=setInterval(nextTurn, SPEEDS[s]);
+  document.querySelectorAll('.bbot.spd').forEach((b,i)=>b.classList.toggle('active',i===s));
+  // update display
+  updateSimTime();
+}
+
+function updateSimTime(){
+  const el=document.getElementById('sim-time');if(!el)return;
+  el.textContent=`T${G.turn} · ${SEASONS[G.season]} ${G.autoMode===0?'⏸':SPEED_LABELS[G.autoMode]}`;
+  el.style.color=G.autoMode===0?'var(--t3)':'var(--gold)';
 }
 
 // ═══════════════════════════════════════
@@ -1551,7 +1709,7 @@ function loadGame(slot=0){
     const all=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');
     const d=all[slot];
     if(!d){alert2(`Aucune sauvegarde dans l'emplacement ${slot+1}.`);return;}
-    clearInterval(G.autoTimer);
+    clearInterval(_speedTimer);_speedTimer=null;
     // Restore scalar fields
     Object.assign(G,{
       money:d.money,turn:d.turn,season:d.season,
@@ -1572,7 +1730,7 @@ function loadGame(slot=0){
     // Reset derived
     G.traffic=[];G.elecGrid=[];
     for(let r=0;r<ROWS;r++){G.traffic[r]=[];G.elecGrid[r]=[];for(let c=0;c<COLS;c++){G.traffic[r][c]=0;G.elecGrid[r][c]=false;}}
-    document.getElementById('auto-lbl').textContent='OFF';
+    setSpeed(0);
     Object.keys(charts).forEach(k=>{if(charts[k])charts[k].destroy();});charts={};
     bstore.length=0;
     document.getElementById('toasts').innerHTML='';
@@ -1647,11 +1805,10 @@ function autoSave(){
 // ═══════════════════════════════════════
 function resetGame(){
   if(!confirm('Recommencer ?'))return;
-  clearInterval(G.autoTimer);
+  setSpeed(0);
   Object.assign(G,{money:5000,turn:1,season:0,taxRate:12,taxBiz:8,autoMode:0,happy:50,pop:80,congestion:0,trafficFlow:0,blackout:false,elecProd:0,elecCons:0,elecImport:0,elecExport:0,elecImportPrice:8,elecExportPrice:5,showElec:false});
   G.policies={healthcare:false,education:false,police:false,transport:false,ecology:false,carfree:false};
   G.history={money:[],pop:[],happy:[],employ:[],poll:[],traffic:[],elec:[]};
-  document.getElementById('auto-lbl').textContent='OFF';
   Object.keys(charts).forEach(k=>{if(charts[k])charts[k].destroy();});charts={};
   bstore.length=0;
   document.getElementById('toasts').innerHTML='';
@@ -1663,6 +1820,53 @@ function resetGame(){
 // ═══════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// TUTORIAL
+// ═══════════════════════════════════════
+const TUTO_STEPS=7;
+let _tutoStep=0;
+
+function openTuto(){
+  _tutoStep=0;
+  document.getElementById('tuto-overlay').style.display='flex';
+  renderTutoDots();
+  gotoTutoStep(0);
+}
+function closeTuto(){
+  document.getElementById('tuto-overlay').style.display='none';
+  localStorage.setItem('pixelmayor_tuto_done','1');
+}
+function tutoNav(dir){
+  _tutoStep=Math.max(0,Math.min(TUTO_STEPS-1,_tutoStep+dir));
+  gotoTutoStep(_tutoStep);
+}
+function gotoTutoStep(n){
+  _tutoStep=n;
+  document.querySelectorAll('.tuto-step').forEach((s,i)=>s.classList.toggle('active',i===n));
+  renderTutoDots();
+  document.getElementById('tuto-prev').style.visibility=n===0?'hidden':'visible';
+  const nextBtn=document.getElementById('tuto-next');
+  if(n===TUTO_STEPS-1){
+    nextBtn.textContent='🎮 JOUER !';
+    nextBtn.className='tnav-btn ok';
+    nextBtn.onclick=closeTuto;
+  } else {
+    nextBtn.textContent='Suivant ▶';
+    nextBtn.className='tnav-btn';
+    nextBtn.onclick=()=>tutoNav(1);
+  }
+}
+function renderTutoDots(){
+  const el=document.getElementById('tuto-dots');if(!el)return;
+  el.innerHTML='';
+  for(let i=0;i<TUTO_STEPS;i++){
+    const d=document.createElement('div');
+    d.className='tuto-dot'+(i===_tutoStep?' on':'');
+    d.onclick=()=>gotoTutoStep(i);
+    el.appendChild(d);
+  }
+}
+
 function boot(){
   initGrid();setupCanvas();
   _acc=null;simTraffic();recalc();pushH();
@@ -1689,7 +1893,15 @@ function boot(){
   log('⚡ PRIORITÉ: construisez une CENTRALE ou une ÉOLIENNE !','bad');
   log('🛣 Routes: 200$/case, 4$/tour. ⛰ Collines/forêts coûtent plus cher.','warn');
   log('🌐 Importez/exportez de l\'électricité via l\'onglet ⚡ du panneau droit.','info');
-  log('💾 Sauvegardez avec le bouton en bas. Auto-save toutes les 5 tours.','info');
+  log('💾 Sauvegardez avec le bouton 💾 en bas. Auto-save toutes les 5 tours.','info');
+
+  updateSimTime();
+  setSpeed(0); // Start paused
+
+  // Show tutorial on first visit
+  if(!localStorage.getItem('pixelmayor_tuto_done')){
+    setTimeout(openTuto, 400);
+  }
 }
 boot();
 </script>
