@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PixelMayor v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#07090f;--p1:#0b0f1c;--p2:#0f1525;--p3:#141d30;
+  --b1:#1c2a42;--b2:#243550;
+  --acc:#3a7bd5;--acc2:#00c9a7;--acc3:#f0a500;
+  --red:#e84545;--green:#44cc88;--pink:#ff6eb4;
+  --t1:#c8d8f0;--t2:#7a9ac0;--t3:#3d5a7a;
+  --gold:#ffd700;--elec:#ffe066;--elec2:#ff9900;
+  --font:'Press Start 2P',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--t1);font-family:var(--font);font-size:8px;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--b2)}
+
+/* TOPBAR */
+#topbar{background:var(--p1);border-bottom:2px solid var(--b1);height:46px;display:flex;align-items:center;padding:0 8px;gap:0;flex-shrink:0;z-index:20;overflow-x:auto}
+#city-name{font-size:9px;color:var(--acc);margin-right:10px;white-space:nowrap}
+.hstat{display:flex;flex-direction:column;align-items:center;padding:0 7px;border-right:1px solid var(--b1);flex-shrink:0}
+.hv{font-size:8px;line-height:1;white-space:nowrap}.hl{font-size:5px;color:var(--t3);margin-top:2px}
+#topbar-right{margin-left:auto;display:flex;align-items:center;gap:5px;flex-shrink:0}
+.badge{font-size:6px;color:var(--t2);background:var(--p2);border:1px solid var(--b1);padding:3px 6px;border-radius:2px;white-space:nowrap}
+.badge.warn{border-color:var(--red);color:var(--red);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ALERT */
+#alert-bar{background:var(--red);color:#fff;font-size:6px;padding:2px 12px;display:none;flex-shrink:0;text-align:center;z-index:30}
+
+/* LAYOUT */
+#main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+#sidebar{width:182px;background:var(--p1);border-right:2px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+#stabs{display:flex;border-bottom:2px solid var(--b1)}
+.stab{flex:1;padding:6px 0;text-align:center;font-size:5px;color:var(--t3);cursor:pointer;border-right:1px solid var(--b1);transition:.1s}
+.stab:last-child{border-right:none}.stab:hover{color:var(--t1);background:var(--p2)}
+.stab.active{color:var(--acc);background:var(--p2);border-bottom:2px solid var(--acc);margin-bottom:-2px}
+#scontent{flex:1;overflow-y:auto;padding:7px}
+.bcat{font-size:5px;color:var(--t3);letter-spacing:1px;margin:7px 0 3px;padding-bottom:2px;border-bottom:1px solid var(--b1)}
+.bcard{background:var(--p2);border:1px solid var(--b1);border-radius:2px;padding:5px 6px;margin-bottom:3px;cursor:pointer;transition:.1s}
+.bcard:hover{border-color:var(--acc)}.bcard.sel{border-color:var(--acc2);background:#0a1e1a}
+.bcard.cant{opacity:.35;cursor:not-allowed}
+.bct{display:flex;justify-content:space-between;align-items:center}
+.bcn{font-size:6px;color:var(--t1)}.bcc{font-size:6px;color:var(--gold)}
+.bcf{font-size:5px;color:var(--t2);margin-top:2px;line-height:1.8}
+.bcf .pos{color:var(--acc2)}.bcf .neg{color:var(--red)}.bcf .elec{color:var(--elec)}
+.elec-req{font-size:5px;color:var(--elec);margin-top:2px}
+.needs-elec::after{content:'⚡';font-size:9px;position:absolute;top:2px;right:4px;opacity:.8}
+.bcard{position:relative}
+
+/* MAP */
+#map-wrap{flex:1;position:relative;overflow:hidden;background:#030508;cursor:crosshair}
+#map-canvas{position:absolute;top:0;left:0;image-rendering:pixelated}
+#map-tooltip{position:absolute;background:var(--p1);border:1px solid var(--acc);padding:6px 8px;font-size:5px;pointer-events:none;display:none;z-index:10;border-radius:2px;line-height:2;max-width:170px;z-index:15}
+#map-overlay{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:5}
+.mbtn{background:var(--p2);border:1px solid var(--b2);color:var(--t1);font-family:var(--font);font-size:6px;padding:5px 8px;cursor:pointer;border-radius:2px;transition:.1s;white-space:nowrap}
+.mbtn:hover{border-color:var(--acc)}.mbtn.act{border-color:var(--acc2);color:var(--acc2)}
+#zoom-ctrl{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:3px;z-index:5}
+.zbtn{background:var(--p2);border:1px solid var(--b1);color:var(--t1);font-family:var(--font);font-size:8px;width:24px;height:24px;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center}
+.zbtn:hover{border-color:var(--acc)}
+#tleg{position:absolute;top:8px;left:8px;background:rgba(11,15,28,.85);border:1px solid var(--b1);padding:5px 7px;font-size:5px;border-radius:2px;line-height:2.2;z-index:5}
+.tl-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px;vertical-align:middle}
+
+/* RIGHT PANEL */
+#rpanel{width:224px;background:var(--p1);border-left:2px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+#rtabs{display:flex;border-bottom:2px solid var(--b1)}
+.rtab{flex:1;padding:6px 0;text-align:center;font-size:5px;color:var(--t3);cursor:pointer;border-right:1px solid var(--b1);transition:.1s}
+.rtab:last-child{border-right:none}.rtab:hover{color:var(--t1);background:var(--p2)}
+.rtab.active{color:var(--acc);background:var(--p2);border-bottom:2px solid var(--acc);margin-bottom:-2px}
+#rcontent{flex:1;overflow-y:auto;padding:7px}
+
+/* UI COMPONENTS */
+.sb{margin-bottom:5px}.sbh{display:flex;justify-content:space-between;font-size:5px;margin-bottom:2px}
+.sbl{color:var(--t2)}.sbv{color:var(--t1)}
+.barbg{background:#06080f;border:1px solid var(--b1);height:7px;border-radius:1px;overflow:hidden}
+.barf{height:100%;transition:width .5s}
+.f-pink{background:var(--pink)}.f-blue{background:var(--acc)}.f-green{background:var(--green)}
+.f-yellow{background:var(--acc3)}.f-cyan{background:var(--acc2)}.f-red{background:var(--red)}
+.f-elec{background:var(--elec)}.f-orange{background:#ff7722}
+.cw{background:var(--p2);border:1px solid var(--b1);border-radius:2px;padding:6px;margin-bottom:6px}
+.ct{font-size:5px;color:var(--t2);margin-bottom:4px;letter-spacing:1px}
+.cw canvas{max-height:85px}
+.taxrow{background:var(--p2);border:1px solid var(--b1);border-radius:2px;padding:6px;margin-bottom:5px}
+.taxlbl{font-size:6px;color:var(--t1);margin-bottom:4px}.taxsub{font-size:5px;color:var(--t2);margin-bottom:4px;line-height:1.8}
+input[type=range]{width:100%;height:5px;background:var(--b1);border-radius:3px;outline:none;cursor:pointer;-webkit-appearance:none;margin-bottom:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--acc);cursor:pointer}
+.taxval{font-size:7px;color:var(--gold);text-align:center}
+.pb{width:100%;background:var(--p3);border:1px solid var(--b1);color:var(--t1);font-family:var(--font);font-size:5px;padding:5px;cursor:pointer;border-radius:2px;margin-bottom:3px;text-align:left;transition:.1s;line-height:1.8}
+.pb:hover{border-color:var(--acc)}.pb.on{border-color:var(--green);color:var(--green)}
+.ll{font-size:5px;padding:3px 0;border-bottom:1px solid var(--b1);color:var(--t2);line-height:1.8}
+.ll.good{color:var(--green)}.ll.bad{color:var(--red)}.ll.warn{color:var(--acc3)}.ll.info{color:var(--acc)}
+.bct2{width:100%;font-size:5px;border-collapse:collapse}
+.bct2 td{padding:3px 2px;border-bottom:1px solid var(--b1);color:var(--t2);line-height:2}
+.bct2 td:last-child{text-align:right;color:var(--t1)}
+.sec{font-size:5px;color:var(--t3);letter-spacing:1px;border-bottom:1px solid var(--b1);padding-bottom:3px;margin:6px 0 5px}
+.elec-panel{background:#110e00;border:1px solid var(--elec2);border-radius:2px;padding:7px;margin-bottom:6px}
+.elec-title{font-size:6px;color:var(--elec);margin-bottom:5px}
+.elec-ok{color:var(--green)}.elec-warn{color:var(--acc3)}.elec-bad{color:var(--red)}
+
+/* BOTTOM */
+#bot{background:var(--p1);border-top:2px solid var(--b1);height:33px;display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0;z-index:20}
+.bbot{background:var(--p2);border:1px solid var(--b1);color:var(--t1);font-family:var(--font);font-size:6px;padding:4px 8px;cursor:pointer;border-radius:2px;transition:.1s;white-space:nowrap}
+.bbot:hover{border-color:var(--acc)}.bbot.pri{border-color:var(--acc);color:#fff}.bbot.pri:hover{background:var(--acc)}
+.bbot.dng{border-color:var(--red);color:var(--red)}.bbot.dng:hover{background:var(--red);color:#fff}
+#tool-disp{font-size:5px;color:var(--t2);margin-left:4px}
+
+/* TOAST */
+#toasts{position:fixed;bottom:43px;right:8px;z-index:100;display:flex;flex-direction:column;gap:4px;max-width:220px}
+.toast{background:var(--p1);border:1.5px solid var(--b2);border-radius:4px;padding:8px;animation:fi .3s;max-width:220px}
+.toast.bad{border-color:var(--red)}.toast.good{border-color:var(--green)}.toast.warn{border-color:var(--acc3)}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ttt{font-size:6px;margin-bottom:4px}
+.tch{display:flex;flex-direction:column;gap:3px;margin-top:4px}
+.tcb{background:var(--p2);border:1px solid var(--b2);color:var(--t1);font-family:var(--font);font-size:5px;padding:4px 5px;cursor:pointer;border-radius:2px;text-align:left;line-height:1.8}
+.tcb:hover{border-color:var(--acc2)}
+
+/* ELEC OVERLAY */
+#elec-overlay-btn{position:absolute;top:40px;right:8px;z-index:5}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="city-name">🏙 PIXELVILLE</div>
+  <div class="hstat"><span class="hv" style="color:var(--gold)" id="h-money">1 200 $</span><span class="hl">TRÉSOR</span></div>
+  <div class="hstat"><span class="hv" style="color:var(--acc2)" id="h-pop">80</span><span class="hl">HABITANTS</span></div>
+  <div class="hstat"><span class="hv" style="color:var(--pink)" id="h-happy">50%</span><span class="hl">BONHEUR</span></div>
+  <div class="hstat"><span class="hv" id="h-income" style="color:var(--green)">+0/t</span><span class="hl">REVENU</span></div>
+  <div class="hstat"><span class="hv" style="color:var(--acc)" id="h-jobs">0%</span><span class="hl">EMPLOI</span></div>
+  <div class="hstat" id="elec-hstat"><span class="hv" id="h-elec" style="color:var(--elec)">⚡ 0/0</span><span class="hl">ÉLECTRICITÉ</span></div>
+  <div class="hstat"><span class="hv" id="h-traffic" style="color:var(--green)">🚗 0%</span><span class="hl">TRAFIC</span></div>
+  <div id="topbar-right">
+    <div class="badge" id="h-season">🌱 PRINT.</div>
+    <div class="badge" id="h-turn-b">T1</div>
+    <div class="badge warn" id="blackout-badge" style="display:none">⚡ PANNE!</div>
+  </div>
+</div>
+<div id="alert-bar">⚠️ <span id="alert-msg"></span></div>
+
+<div id="main">
+  <div id="sidebar">
+    <div id="stabs">
+      <div class="stab active" onclick="setStab(0)">🏗</div>
+      <div class="stab" onclick="setStab(1)">🛣</div>
+      <div class="stab" onclick="setStab(2)">⚡</div>
+      <div class="stab" onclick="setStab(3)">🔧</div>
+      <div class="stab" onclick="setStab(4)">📜</div>
+    </div>
+    <div id="scontent"></div>
+  </div>
+
+  <div id="map-wrap">
+    <canvas id="map-canvas"></canvas>
+    <div id="map-tooltip"></div>
+    <div id="tleg">
+      <div><span class="tl-dot" style="background:#44cc88"></span>Fluide</div>
+      <div><span class="tl-dot" style="background:#f0a500"></span>Dense</div>
+      <div><span class="tl-dot" style="background:#e84545"></span>Bouchon</div>
+      <div><span class="tl-dot" style="background:#aa00ff"></span>Paralysé</div>
+      <div id="elec-legend" style="margin-top:4px;display:none">
+        <div><span class="tl-dot" style="background:#ffe066;border:1px solid #ff9900"></span>Alimenté</div>
+        <div><span class="tl-dot" style="background:#440000"></span>Sans courant</div>
+      </div>
+    </div>
+    <div id="zoom-ctrl">
+      <button class="zbtn" onclick="zoom(1.25)" title="Zoom +">+</button>
+      <button class="zbtn" onclick="zoom(0.8)" title="Zoom -">−</button>
+      <button class="zbtn" onclick="resetView()" title="Reset">⌂</button>
+    </div>
+    <div id="map-overlay">
+      <button class="mbtn act" id="btn-build" onclick="setMode('build')">🏗 BÂTIR</button>
+      <button class="mbtn" id="btn-road" onclick="setMode('road')">🛣 ROUTE</button>
+      <button class="mbtn" id="btn-demo" onclick="setMode('demo')">💥 DÉMOLIR</button>
+      <button class="mbtn" id="btn-info" onclick="setMode('info')">🔍 INFOS</button>
+      <button class="mbtn" id="btn-elec" onclick="toggleElecOverlay()">⚡ RÉSEAU</button>
+    </div>
+  </div>
+
+  <div id="rpanel">
+    <div id="rtabs">
+      <div class="rtab active" onclick="setRtab(0)">📊</div>
+      <div class="rtab" onclick="setRtab(1)">🚗</div>
+      <div class="rtab" onclick="setRtab(2)">⚡</div>
+      <div class="rtab" onclick="setRtab(3)">📈</div>
+      <div class="rtab" onclick="setRtab(4)">💸</div>
+      <div class="rtab" onclick="setRtab(5)">🏛</div>
+      <div class="rtab" onclick="setRtab(6)">📜</div>
+    </div>
+    <div id="rcontent"></div>
+  </div>
+</div>
+
+<div id="bot">
+  <button class="bbot pri" onclick="nextTurn()">▶ TOUR SUIVANT</button>
+  <button class="bbot" onclick="toggleAuto()">⏱ <span id="auto-lbl">OFF</span></button>
+  <button class="bbot" onclick="openSaveMenu()">💾 SAUVEGARDES</button>
+  <span id="tool-disp">Outil: <span id="tl" style="color:var(--acc2)">MAISON</span></span>
+  <div style="margin-left:auto;font-size:5px;color:var(--t3)">Scroll/pinch: zoom · Clic-drag: déplacer</div>
+  <button class="bbot dng" onclick="resetGame()">🗑 RESET</button>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const COLS=30, ROWS=20, BASE_TILE=28;
+
+// Exponential cost multiplier based on number already built
+function buildCost(key){
+  const base=B[key].cost;
+  const n=countType(key);
+  // Each copy costs 20% more than the last
+  return Math.round(base * Math.pow(1.20, n));
+}
+function maintCost(key){
+  const base=B[key].maint;
+  const n=countType(key);
+  return Math.round(base * Math.pow(1.08, n));
+}
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const G={
+  money:5000, turn:1, season:0,
+  taxRate:12, taxBiz:8,
+  autoMode:0, autoTimer:null,
+  mode:'build', selBld:'maison',
+  stab:0, rtab:0,
+  grid:[], road:[], elecGrid:[], traffic:[],
+  terrain:[], // 0=flat,1=hill,2=water,3=forest
+  elecProd:0, elecCons:0, blackout:false,
+  elecImport:0, elecExport:0, elecImportPrice:8, elecExportPrice:5,
+  congestion:0, trafficFlow:0,
+  pop:80, happy:50, employ:0,
+  health:35, edu:25, secu:25, poll:5, crime:25,
+  jobs_total:0, housing_cap:80, maint:0, income:0,
+  roadAccessBonus:100,
+  showElec:false,
+  history:{money:[],pop:[],happy:[],employ:[],poll:[],traffic:[],elec:[]},
+  policies:{healthcare:false,education:false,police:false,transport:false,ecology:false,carfree:false},
+  // camera
+  camX:0, camY:0, camZoom:1,
+  dragging:false, dragStart:null,
+  _hover:null,
+};
+const SEASONS=['🌱 PRINT.','☀️ ÉTÉ','🍂 AUTO.','❄️ HIVER'];
+
+// ═══════════════════════════════════════
+// BUILDINGS
+// ═══════════════════════════════════════
+const B={
+  maison:    {n:'🏠 MAISON',    cat:'RÉSIDENTIEL',col:'#0d1e0a',brd:'#1e3a14',cost:300, maint:12, pop:8,  jobs:0, happy:1, health:0,edu:0,secu:0,poll:1, crime:0, tgen:3,  elec:2},
+  immeuble:  {n:'🏢 IMMEUBLE',  cat:'RÉSIDENTIEL',col:'#0a1525',brd:'#183050',cost:900, maint:30, pop:40, jobs:0, happy:0, health:0,edu:0,secu:0,poll:3, crime:1, tgen:14, elec:8},
+  villa:     {n:'🏡 VILLA',     cat:'RÉSIDENTIEL',col:'#0f1e0a',brd:'#2a4018',cost:550, maint:16, pop:5,  jobs:0, happy:4, health:1,edu:0,secu:0,poll:0, crime:-1,tgen:5,  elec:3},
+  commerce:  {n:'🏪 COMMERCE',  cat:'ÉCONOMIE',   col:'#1a1505',brd:'#352a0a',cost:500, maint:18, pop:0, jobs:15, happy:2, health:0,edu:0,secu:0,poll:2, crime:0, tgen:8,  elec:5},
+  usine:     {n:'🏭 USINE',     cat:'ÉCONOMIE',   col:'#1a0c05',brd:'#3a1808',cost:1200,maint:40, pop:0, jobs:50, happy:-5,health:-3,edu:0,secu:0,poll:15,crime:0, tgen:22, elec:20},
+  bureaux:   {n:'🏦 BUREAUX',   cat:'ÉCONOMIE',   col:'#0a1020',brd:'#162240',cost:900, maint:28, pop:0, jobs:32, happy:1, health:0,edu:2,secu:0,poll:2, crime:0, tgen:16, elec:12},
+  marche:    {n:'🛒 MARCHÉ',    cat:'ÉCONOMIE',   col:'#1a1208',brd:'#302010',cost:280, maint:8,  pop:0, jobs:8,  happy:3, health:1,edu:0,secu:0,poll:1, crime:0, tgen:6,  elec:2},
+  parc:      {n:'🌳 PARC',      cat:'SERVICES',   col:'#061408',brd:'#0f2810',cost:350, maint:12, pop:0, jobs:2,  happy:6, health:4,edu:1,secu:1,poll:-5,crime:-2,tgen:1,  elec:0},
+  hopital:   {n:'🏥 HÔPITAL',   cat:'SERVICES',   col:'#061818',brd:'#0e2c2c',cost:2000,maint:60, pop:0, jobs:28, happy:4, health:20,edu:2,secu:0,poll:0, crime:0, tgen:10, elec:25},
+  ecole:     {n:'🏫 ÉCOLE',     cat:'SERVICES',   col:'#120a1e',brd:'#22103a',cost:1400,maint:45, pop:0, jobs:20, happy:2, health:0,edu:22,secu:0,poll:0, crime:-3,tgen:7,  elec:12},
+  police:    {n:'🚔 POLICE',    cat:'SERVICES',   col:'#080a1e',brd:'#10163a',cost:1100,maint:35, pop:0, jobs:14, happy:1, health:0,edu:0,secu:24,poll:0, crime:-10,tgen:4, elec:8},
+  pompiers:  {n:'🚒 POMPIERS',  cat:'SERVICES',   col:'#1a0808',brd:'#3a1010',cost:900, maint:28, pop:0, jobs:12, happy:1, health:2,edu:0,secu:8, poll:0, crime:0, tgen:3,  elec:8},
+  parking:   {n:'🅿️ PARKING',   cat:'TRANSPORT',  col:'#101018',brd:'#202030',cost:250, maint:6,  pop:0, jobs:2,  happy:1, health:0,edu:0,secu:0,poll:1, crime:0, tgen:-10,elec:1},
+  gare:      {n:'🚉 GARE',      cat:'TRANSPORT',  col:'#0a1020',brd:'#182040',cost:4000,maint:80, pop:0, jobs:35, happy:7, health:0,edu:0,secu:0,poll:-6,crime:0, tgen:-28,elec:30},
+  velo:      {n:'🚲 VÉLOS',     cat:'TRANSPORT',  col:'#081408',brd:'#102010',cost:400, maint:10, pop:0, jobs:3,  happy:3, health:3,edu:0,secu:0,poll:-3,crime:0, tgen:-7, elec:0},
+  centrale:  {n:'⚡ CENTRALE',  cat:'ÉNERGIE',    col:'#1a1600',brd:'#3a2c00',cost:1800,maint:80, pop:0, jobs:10, happy:-4,health:-5,edu:0,secu:0,poll:18,crime:0, tgen:5,  elec:0, eprod:120},
+  eolienne:  {n:'🌀 ÉOLIENNE',  cat:'ÉNERGIE',    col:'#080e18',brd:'#102030',cost:1200,maint:45, pop:0, jobs:5,  happy:0, health:2,edu:0,secu:0,poll:-4,crime:0, tgen:1,  elec:0, eprod:60},
+  solaire:   {n:'☀️ SOLAIRE',   cat:'ÉNERGIE',    col:'#0a1000',brd:'#182800',cost:800, maint:30, pop:0, jobs:4,  happy:1, health:1,edu:0,secu:0,poll:-2,crime:0, tgen:0,  elec:0, eprod:35},
+  nucleaire: {n:'☢️ NUCLÉAIRE', cat:'ÉNERGIE',    col:'#0a1208',brd:'#183210',cost:12000,maint:200,pop:0,jobs:30, happy:-8,health:-2,edu:0,secu:0,poll:-2,crime:0, tgen:2,  elec:0, eprod:400},
+  metro:     {n:'🚇 MÉTRO',     cat:'INFRA',      col:'#0a0818',brd:'#181030',cost:5000,maint:100,pop:0, jobs:30, happy:8, health:0,edu:0,secu:0,poll:-6,crime:0, tgen:-35,elec:40},
+  stade:     {n:'🏟 STADE',     cat:'LOISIRS',    col:'#080e08',brd:'#101e10',cost:5000,maint:100,pop:0, jobs:40, happy:14,health:2,edu:0,secu:-1,poll:2, crime:0, tgen:20, elec:35},
+  cinema:    {n:'🎬 CINÉMA',    cat:'LOISIRS',    col:'#0e0810',brd:'#1e1020',cost:1100,maint:28, pop:0, jobs:14, happy:8, health:0,edu:1,secu:0,poll:1, crime:0, tgen:10, elec:15},
+  restaurant:{n:'🍽 RESTAU',    cat:'LOISIRS',    col:'#1a0e06',brd:'#301c08',cost:550, maint:16, pop:0, jobs:10, happy:5, health:0,edu:0,secu:0,poll:1, crime:0, tgen:5,  elec:4},
+};
+const CAT_ORDER=['RÉSIDENTIEL','ÉCONOMIE','SERVICES','TRANSPORT','ÉNERGIE','INFRA','LOISIRS'];
+
+// ═══════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════
+const EVENTS=[
+  {title:'🔥 INCENDIE',type:'bad',text:'Un incendie ravage un quartier !',ch:[
+    {l:'💧 Pompiers (-300$)',a:()=>{sp(300);hp(3);log('Incendie maîtrisé, aucun dégât.','good')}},
+    {l:'😰 Laisser brûler',a:()=>{
+      const d=destroyRandomBuilding();
+      G.pop=Math.max(20,G.pop-12);hp(-10);
+      log(`🔥 Incendie: ${d?d.name+' détruit':'dégâts'}, -12 hab.`,'bad');
+      renderMap();
+    }},
+    {l:'🚒 Pas de pompiers (dégâts partiels)',a:()=>{
+      if(Math.random()<0.6){const d=destroyRandomBuilding();log(`🔥 Dégâts: ${d?d.name+' détruit':'bâtiment perdu'}.`,'bad');renderMap();}
+      else{log('La chance a épargné la ville.','warn');}
+      hp(-4);
+    }},
+  ]},
+  {title:'🎉 FESTIVAL',type:'good',text:'Les habitants veulent fêter.',ch:[
+    {l:'🎊 Financer (-500$)',a:()=>{sp(500);hp(14);log('Festival réussi!','good')}},
+    {l:'❌ Refuser',a:()=>{hp(-5);log('Habitants déçus.','warn')}},
+  ]},
+  {title:'🦠 ÉPIDÉMIE',type:'bad',text:'Maladie en propagation rapide.',ch:[
+    {l:'💉 Vaccination (-600$)',a:()=>{sp(600);G.health=clamp(G.health+10,0,100);log('Épidémie stoppée.','good')}},
+    {l:'🔒 Confinement',a:()=>{hp(-14);G.health=clamp(G.health+5,0,100);log('Confinement. -14 bonheur.','warn')}},
+    {l:'🤷 Rien',a:()=>{G.pop=Math.max(20,G.pop-30);G.health-=10;log('30 décès.','bad')}},
+  ]},
+  {title:'💼 GRÈVE',type:'warn',text:'Grève générale des travailleurs.',ch:[
+    {l:'💰 Céder (-450$)',a:()=>{sp(450);hp(10);log('Paix sociale.','good')}},
+    {l:'⚖️ Médiation (-200$)',a:()=>{sp(200);hp(2);log('Compromis.','info')}},
+    {l:'🚨 Réprimer',a:()=>{hp(-12);G.secu-=6;log('Répression brutale.','bad')}},
+  ]},
+  {title:'🌱 SUBVENTION',type:'good',text:'Le gouvernement propose une aide.',ch:[
+    {l:'🌿 Écologie (+1000$)',a:()=>{G.money+=1000;G.poll=clamp(G.poll-8,0,100);log('+1000$ subvention verte.','good')}},
+    {l:'🏗 Infrastructure (+1800$)',a:()=>{G.money+=1800;log('+1800$ subvention infra.','good')}},
+  ]},
+  {title:'⚡ PANNE ÉLECTRIQUE',type:'bad',text:'Une surtension détruit des équipements.',ch:[
+    {l:'🔧 Réparation urgente (-800$)',a:()=>{sp(800);G.blackout=false;log('Réseau électrique réparé.','good')}},
+    {l:'⏳ Attendre (2 tours sans courant)',a:()=>{G.blackout=true;hp(-8);log('Panne prolongée. Production à l\'arrêt!','bad')}},
+  ]},
+  {title:'🚧 ROUTES DÉGRADÉES',type:'warn',text:'Les routes nécessitent des réparations urgentes.',ch:[
+    {l:'🔧 Rénover (-700$)',a:()=>{sp(700);G.congestion=clamp(G.congestion-18,0,100);log('Routes rénovées.','good')}},
+    {l:'⏳ Reporter',a:()=>{G.congestion=clamp(G.congestion+12,0,100);log('Routes se dégradent. Congestion +12.','bad')}},
+  ]},
+  {title:'🚌 GRÈVE TRANSPORTS',type:'bad',text:'Plus de bus ni train ce tour.',ch:[
+    {l:'🤝 Négocier (-350$)',a:()=>{sp(350);log('Transport rétabli.','good')}},
+    {l:'😤 Ignorer',a:()=>{G.congestion=clamp(G.congestion+22,0,100);hp(-10);log('Bouchons catastrophiques! +22 congestion.','bad')}},
+  ]},
+  {title:'☢️ ACCIDENT NUCLÉAIRE',type:'bad',text:'Incident à la centrale nucléaire.',ch:[
+    {l:'🛡 Containment (-2000$)',a:()=>{sp(2000);G.poll=clamp(G.poll+5,0,100);log('Incident contenu. Pollution +5.','warn')}},
+    {l:'🚨 Évacuation',a:()=>{G.pop=Math.max(20,G.pop-50);hp(-20);log('Evacuation: -50 hab.','bad')}},
+  ]},
+  {title:'💡 STARTUP MOBILITÉ',type:'good',text:'Une startup de covoiturage veut s\'installer.',ch:[
+    {l:'🤝 Accueillir (-250$)',a:()=>{sp(250);G.congestion=clamp(G.congestion-10,0,100);hp(5);log('Covoiturage actif. Trafic réduit.','good')}},
+    {l:'❌ Refuser',a:()=>{log('Opportunité manquée.','warn')}},
+  ]},
+  {title:'🌪 TORNADE',type:'bad',text:'Une tornade traverse la ville !',ch:[
+    {l:'🏠 Plan urgence (-500$)',a:()=>{
+      sp(500);
+      const d=destroyRandomBuilding();
+      log(`Tornade: ${d?d.name+' détruit':'un bâtiment perdu'} malgré le plan.`,'warn');renderMap();
+    }},
+    {l:'😱 Subir les dégâts',a:()=>{
+      const n=1+Math.floor(Math.random()*3);
+      let lost=[];
+      for(let i=0;i<n;i++){const d=destroyRandomBuilding();if(d)lost.push(d.name);}
+      hp(-15);log(`🌪 Tornade: ${lost.length} bâtiment(s) détruit(s): ${lost.join(', ')}.`,'bad');renderMap();
+    }},
+  ]},
+  {title:'💥 EXPLOSION',type:'bad',text:'Une explosion dans le quartier industriel !',ch:[
+    {l:'🚒 Intervention (-400$)',a:()=>{
+      sp(400);
+      if(Math.random()<0.4){const d=destroyRandomBuilding();log(`Explosion: ${d?d.name+' détruit':'dégâts limités'}.`,'warn');renderMap();}
+      else log('Zone sécurisée, aucun dégât.','good');
+    }},
+    {l:'⏳ Évacuer la zone',a:()=>{
+      const d=destroyRandomBuilding();const d2=destroyRandomBuilding();
+      G.poll=clamp(G.poll+10,0,100);hp(-8);
+      log(`Explosion: ${[d,d2].filter(Boolean).map(x=>x.name).join(', ')} détruits. Pollution +10.`,'bad');renderMap();
+    }},
+  ]},
+  {title:'⚡ MARCHÉ ÉLECTRIQUE',type:'good',text:'Opportunité sur le marché de l\'énergie !',ch:[
+    {l:'📈 Vendre surplus (+revenus)',a:()=>{
+      const surplus=Math.max(0,G.elecProd-G.elecCons);
+      const gain=surplus*G.elecExportPrice;
+      G.money+=gain;
+      log(`Vente d'électricité: +${fmt(gain)}$ (${surplus}MW à ${G.elecExportPrice}$/MW).`,'good');
+    }},
+    {l:'📉 Acheter pour stocker (-coût)',a:()=>{
+      const cost=50*G.elecImportPrice;
+      if(!check(cost)){log('Pas assez pour acheter.','warn');return;}
+      sp(cost);hp(2);
+      log(`Achat de réserves: -${fmt(cost)}$. Stabilité réseau améliorée.`,'info');
+      G.blackout=false;
+    }},
+  ]},
+];
+
+// ═══════════════════════════════════════
+// ELECTRICITY IMPORT/EXPORT SYSTEM
+// ═══════════════════════════════════════
+function getBuildingCells(){
+  const cells=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(G.grid[r][c])cells.push([r,c]);
+  return cells;
+}
+function destroyRandomBuilding(){
+  const cells=getBuildingCells();
+  if(!cells.length)return null;
+  const [r,c]=cells[Math.floor(Math.random()*cells.length)];
+  const name=B[G.grid[r][c]]?.n||'bâtiment';
+  G.grid[r][c]='';_acc=null;
+  return {r,c,name};
+}
+function elecMarketPrice(){
+  const wave=Math.sin(G.turn*0.4)*0.25+(Math.random()-0.5)*0.15;
+  return {
+    imp:Math.max(3,Math.round(8*(1+wave))),
+    exp:Math.max(1,Math.round(5*(1-wave*0.5))),
+  };
+}
+
+const POLICIES={
+  healthcare:{n:'🏥 Couverture santé',  cost:100,fx:()=>{G.health=clamp(G.health+5,0,100);hp(2)}},
+  education: {n:'📚 Éducation gratuite',cost:90, fx:()=>{G.edu=clamp(G.edu+5,0,100);hp(1)}},
+  police:    {n:'🚔 Renforts police',   cost:80, fx:()=>{G.secu=clamp(G.secu+4,0,100);G.crime=clamp(G.crime-2,0,100)}},
+  transport: {n:'🚌 Transports subv.',  cost:120,fx:()=>{hp(3);G.congestion=clamp(G.congestion-6,0,100);G.poll=clamp(G.poll-2,0,100)}},
+  ecology:   {n:'🌿 Plan écologie',     cost:85, fx:()=>{G.poll=clamp(G.poll-4,0,100);hp(1)}},
+  carfree:   {n:'🚫🚗 Zone sans voiture',cost:130,fx:()=>{G.congestion=clamp(G.congestion-10,0,100);G.poll=clamp(G.poll-5,0,100);hp(G.congestion<30?4:-2)}},
+};
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function sp(n){G.money-=n;}
+function hp(n){G.happy=clamp(G.happy+n,0,100);}
+function fmt(n){return Math.round(n).toLocaleString('fr-FR');}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function ib(r,c){return r>=0&&r<ROWS&&c>=0&&c<COLS;}
+function isRoad(r,c){return ib(r,c)&&G.road[r][c];}
+function log(msg,type='info'){
+  const el=document.getElementById('log-list');if(!el)return;
+  const d=document.createElement('div');d.className='ll '+type;
+  d.textContent=`T${G.turn}: ${msg}`;
+  el.insertBefore(d,el.firstChild);
+  while(el.children.length>80)el.removeChild(el.lastChild);
+}
+function alert2(msg){
+  const a=document.getElementById('alert-bar');a.style.display='block';
+  document.getElementById('alert-msg').textContent=msg;
+  clearTimeout(alert2._t);alert2._t=setTimeout(()=>a.style.display='none',4000);
+}
+function check(n){if(G.money<n){alert2(`Besoin: ${fmt(n)}$`);return false;}return true;}
+function countType(key){let n=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(G.grid[r][c]===key)n++;return n;}
+function allBlds(){const m={};for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=G.grid[r][c];if(t)m[t]=(m[t]||0)+1;}return m;}
+function countRoads(){let n=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(G.road[r][c])n++;return n;}
+
+// ═══════════════════════════════════════
+// TERRAIN GENERATION
+// ═══════════════════════════════════════
+function genTerrain(){
+  G.terrain=[];
+  for(let r=0;r<ROWS;r++){G.terrain[r]=[];for(let c=0;c<COLS;c++)G.terrain[r][c]=0;}
+  // Random hills clusters
+  const hillSeeds=[[4,6],[4,20],[12,8],[14,22],[7,15]];
+  hillSeeds.forEach(([hr,hc])=>{
+    const rad=2+Math.floor(Math.random()*3);
+    for(let r=hr-rad;r<=hr+rad;r++)for(let c=hc-rad;c<=hc+rad;c++){
+      if(!ib(r,c))continue;
+      const dist=Math.sqrt((r-hr)**2+(c-hc)**2);
+      if(dist<=rad)G.terrain[r][c]=1;
+    }
+  });
+  // Water patches
+  [[16,5,2],[15,25,2],[2,14,2]].forEach(([wr,wc,rad])=>{
+    for(let r=wr-rad;r<=wr+rad;r++)for(let c=wc-rad;c<=wc+rad;c++){
+      if(!ib(r,c))continue;
+      const dist=Math.sqrt((r-wr)**2+(c-wc)**2);
+      if(dist<=rad)G.terrain[r][c]=2;
+    }
+  });
+  // Forest patches
+  [[2,4,2],[3,25,2],[10,28,2],[17,14,2]].forEach(([fr,fc,rad])=>{
+    for(let r=fr-rad;r<=fr+rad;r++)for(let c=fc-rad;c<=fc+rad;c++){
+      if(!ib(r,c))continue;
+      if(G.terrain[r][c]!==0)continue;
+      const dist=Math.sqrt((r-fr)**2+(c-fc)**2);
+      if(dist<=rad)G.terrain[r][c]=3;
+    }
+  });
+}
+
+// Terrain costs extra to build on
+function terrainBuildCost(r,c){
+  const t=G.terrain[r][c];
+  if(t===1)return 300; // hill surcharge
+  if(t===2)return Infinity; // no build on water
+  if(t===3)return 150; // forest clearing
+  return 0;
+}
+function terrainRoadCost(r,c){
+  const t=G.terrain[r][c];
+  if(t===1)return 400; // mountain road expensive
+  if(t===2)return Infinity;
+  if(t===3)return 200;
+  return 0;
+}
+
+// ═══════════════════════════════════════
+// ROAD ACCESS (FLOOD-FILL)
+// ═══════════════════════════════════════
+let _acc=null;
+function buildAcc(){
+  _acc=[];
+  for(let r=0;r<ROWS;r++){_acc[r]=[];for(let c=0;c<COLS;c++)_acc[r][c]=null;}
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(_acc[r][c]===null&&G.grid[r][c])floodAcc(r,c,G.grid[r][c]);}
+}
+function floodAcc(sr,sc,type){
+  const vis=new Set(),q=[[sr,sc]],cells=[];let ok=false;
+  while(q.length){
+    const[r,c]=q.shift();const k=r*100+c;
+    if(vis.has(k))continue;vis.add(k);
+    if(!ib(r,c)||G.grid[r][c]!==type)continue;
+    cells.push([r,c]);
+    if(isRoad(r-1,c)||isRoad(r+1,c)||isRoad(r,c-1)||isRoad(r,c+1))ok=true;
+    [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{if(ib(nr,nc)&&G.grid[nr][nc]===type&&!vis.has(nr*100+nc))q.push([nr,nc]);});
+  }
+  cells.forEach(([r,c])=>_acc[r][c]=ok);
+}
+function hasAcc(r,c){if(!_acc||_acc[r][c]===null)buildAcc();return _acc[r][c]===true;}
+
+// ═══════════════════════════════════════
+// ELECTRICITY GRID (BFS from sources)
+// ═══════════════════════════════════════
+function buildElecGrid(){
+  G.elecGrid=[];
+  for(let r=0;r<ROWS;r++){G.elecGrid[r]=[];for(let c=0;c<COLS;c++)G.elecGrid[r][c]=false;}
+  if(G.blackout)return;
+  // Find all power sources
+  const sources=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const t=G.grid[r][c];
+    if(t&&B[t]&&B[t].eprod)sources.push([r,c]);
+  }
+  if(!sources.length)return;
+  // BFS: electricity spreads through roads and adjacency
+  const vis=new Set();
+  const q=[...sources];
+  sources.forEach(([r,c])=>{G.elecGrid[r][c]=true;vis.add(r*100+c);});
+  while(q.length){
+    const[r,c]=q.shift();
+    // Spread to adjacent roads and buildings
+    [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{
+      if(!ib(nr,nc))return;
+      const k=nr*100+nc;
+      if(vis.has(k))return;
+      // Can spread via road or adjacent building
+      if(G.road[nr][nc]||G.grid[nr][nc]){
+        vis.add(k);G.elecGrid[nr][nc]=true;q.push([nr,nc]);
+      }
+    });
+  }
+}
+
+function calcElec(){
+  let prod=0,cons=0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const t=G.grid[r][c];if(!t)continue;
+    const b=B[t];
+    if(b.eprod)prod+=b.eprod;
+    if(b.elec)cons+=b.elec;
+  }
+  G.elecProd=prod+G.elecImport;
+  G.elecCons=cons;
+  return G.elecProd>=G.elecCons;
+}
+
+function isElecPowered(r,c){return !!(G.elecGrid&&G.elecGrid[r]&&G.elecGrid[r][c]);}
+
+// ═══════════════════════════════════════
+// TRAFFIC
+// ═══════════════════════════════════════
+function simTraffic(){
+  G.traffic=[];
+  for(let r=0;r<ROWS;r++){G.traffic[r]=[];for(let c=0;c<COLS;c++)G.traffic[r][c]=0;}
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const t=G.grid[r][c];if(!t)continue;
+    const b=B[t];const gen=b.tgen||0;if(!gen)continue;
+    [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{if(isRoad(nr,nc))G.traffic[nr][nc]+=gen;});
+  }
+  if(G.policies.transport)for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)G.traffic[r][c]*=0.72;
+  if(G.policies.carfree)  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)G.traffic[r][c]*=0.58;
+  let s=0,n=0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(G.road[r][c]){G.traffic[r][c]=clamp(G.traffic[r][c],0,100);s+=G.traffic[r][c];n++;}
+  G.trafficFlow=n>0?s/n:0;
+  G.congestion=clamp(G.congestion*0.68+G.trafficFlow*0.32,0,100);
+}
+
+function tCol(v){if(v<25)return'#44cc88';if(v<50)return'#f0a500';if(v<75)return'#e84545';return'#aa00ff';}
+
+// ═══════════════════════════════════════
+// RECALC
+// ═══════════════════════════════════════
+function recalc(){
+  _acc=null;buildAcc();
+  buildElecGrid();
+  calcElec();
+  let pop=0,jobs=0,hap=0,health=0,edu=0,secu=0,poll=0,crime=0,maint=0,housing=0;
+  let conn=0,total=0;
+
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const t=G.grid[r][c];if(!t)continue;
+    const b=B[t];if(!b)continue;
+    total++;
+    const road_ok=hasAcc(r,c);
+    const elec_ok=!b.elec||isElecPowered(r,c);
+    // Efficacité: 100% si route+élec, 30% si pas de route, 50% si pas d'élec, 15% si ni route ni élec
+    let eff=1.0;
+    if(!road_ok)eff*=0.3;
+    if(b.elec&&!elec_ok)eff*=0.5;
+    if(road_ok)conn++;
+
+    housing+=b.pop;
+    jobs+=b.jobs*eff;hap+=b.happy*eff;
+    health+=b.health*eff;edu+=b.edu*eff;secu+=b.secu*eff;
+    poll+=b.poll;crime+=b.crime||0;maint+=maintCost(t)*(road_ok?1:0.5);
+  }
+  G.housing_cap=20+housing;
+  G.pop=clamp(G.pop,20,G.housing_cap);
+  G.jobs_total=Math.round(jobs);
+  G.employ=clamp(Math.round((jobs/Math.max(1,G.pop))*100),0,100);
+
+  const congP=G.congestion>70?-12:G.congestion>50?-6:G.congestion>30?-2:0;
+  const blackP=G.blackout?-20:0;
+  const elecShortP=(G.elecCons>G.elecProd&&G.elecProd>0)?-8:0;
+
+  G.happy=clamp(Math.round(25+hap+(G.employ>60?5:0)+(poll<10?3:0)+congP+blackP+elecShortP),0,100);
+  G.health=clamp(Math.round(15+health-(G.congestion>60?5:0)-(G.blackout?10:0)),0,100);
+  G.edu=clamp(Math.round(10+edu),0,100);
+  G.secu=clamp(Math.round(15+secu),0,100);
+  G.poll=clamp(Math.round(poll+G.congestion*0.35),0,100);
+  G.crime=clamp(Math.round(25+crime),0,100);
+  G.maint=Math.round(maint);
+  G.roadAccessBonus=total>0?Math.round((conn/total)*100):100;
+
+  const polCost=Object.entries(G.policies).filter(([,v])=>v).reduce((s,[k])=>s+POLICIES[k].cost,0);
+  const roadMaint=countRoads()*4; // 4$/case/tour — pas 2
+  G.income=calcIncome()-G.maint-polCost-roadMaint;
+}
+function calcIncome(){
+  const effMult=G.blackout?0.4:1; // blackout cuts income
+  return Math.floor((G.pop*G.taxRate*0.9+G.jobs_total*G.taxBiz*0.5)*effMult);
+}
+
+// ═══════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════
+function pushH(){
+  const H=G.history,MAX=40;
+  H.money.push(G.money);H.pop.push(G.pop);H.happy.push(G.happy);
+  H.employ.push(G.employ);H.poll.push(G.poll);H.traffic.push(Math.round(G.congestion));
+  H.elec.push(G.elecProd>0?Math.round(clamp(G.elecProd/Math.max(1,G.elecCons)*100,0,150)):0);
+  Object.keys(H).forEach(k=>{if(H[k].length>MAX)H[k].shift();});
+}
+
+// ═══════════════════════════════════════
+// INIT GRID
+// ═══════════════════════════════════════
+function initGrid(){
+  G.grid=[];G.road=[];G.traffic=[];
+  for(let r=0;r<ROWS;r++){
+    G.grid[r]=[];G.road[r]=[];G.traffic[r]=[];
+    for(let c=0;c<COLS;c++){G.grid[r][c]='';G.road[r][c]=false;G.traffic[r][c]=0;}
+  }
+  genTerrain();
+  // Starter: small road network + a few buildings
+  for(let c=8;c<20;c++)G.road[9][c]=true;
+  for(let r=5;r<14;r++)G.road[r][12]=true;
+  for(let c=10;c<16;c++)G.road[6][c]=true;
+  place(8,10,'maison');place(8,11,'maison');place(8,13,'maison');
+  place(10,11,'maison');place(10,13,'maison');
+  place(8,14,'commerce');place(8,15,'marche');
+  place(7,11,'parc');place(7,12,'parc');place(7,13,'parc');
+  // NO starter power — player must build one!
+}
+function place(r,c,t){if(!ib(r,c))return;const ter=G.terrain[r][c];if(ter===0||ter===3)G.grid[r][c]=t;}
+
+// ═══════════════════════════════════════
+// CANVAS / ZOOM / PAN
+// ═══════════════════════════════════════
+let canvas,ctx;
+function setupCanvas(){
+  canvas=document.getElementById('map-canvas');
+  ctx=canvas.getContext('2d');
+  resizeCvs();
+  window.addEventListener('resize',resizeCvs);
+  // Mouse events
+  canvas.addEventListener('click',onMapClick);
+  canvas.addEventListener('mousemove',onMapMov);
+  canvas.addEventListener('mouseleave',()=>{document.getElementById('map-tooltip').style.display='none';G._hover=null;renderMap();});
+  canvas.addEventListener('mousedown',onMDown);
+  canvas.addEventListener('mouseup',onMUp);
+  // Wheel zoom
+  canvas.addEventListener('wheel',onWheel,{passive:false});
+  // Touch
+  let lastDist=0;
+  canvas.addEventListener('touchstart',e=>{if(e.touches.length===2){lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:true});
+  canvas.addEventListener('touchmove',e=>{
+    if(e.touches.length===2){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      const s=d/lastDist;zoom(s,true);lastDist=d;e.preventDefault();
+    }
+  },{passive:false});
+  resetView();
+}
+function resizeCvs(){
+  const w=document.getElementById('map-wrap');
+  canvas.width=w.clientWidth;canvas.height=w.clientHeight;
+  renderMap();
+}
+function resetView(){
+  const w=document.getElementById('map-wrap');
+  const tileW=Math.floor(Math.min(w.clientWidth/COLS,(w.clientHeight-50)/ROWS));
+  G.camZoom=tileW/BASE_TILE;
+  G.camX=(w.clientWidth-COLS*tileW)/2;
+  G.camY=(w.clientHeight-50-ROWS*tileW)/2;
+  renderMap();
+}
+function zoom(factor,centered=false){
+  const w=document.getElementById('map-wrap');
+  const cx=w.clientWidth/2,cy=w.clientHeight/2;
+  const wOld=COLS*BASE_TILE*G.camZoom,hOld=ROWS*BASE_TILE*G.camZoom;
+  G.camZoom=clamp(G.camZoom*factor,0.3,4);
+  const wNew=COLS*BASE_TILE*G.camZoom,hNew=ROWS*BASE_TILE*G.camZoom;
+  G.camX+=  (wOld-wNew)/2;
+  G.camY+=  (hOld-hNew)/2;
+  renderMap();
+}
+function onWheel(e){e.preventDefault();zoom(e.deltaY<0?1.12:0.88);}
+
+let _roadDrag=false,_panMode=false;
+function onMDown(e){
+  if(e.button===1||e.altKey){_panMode=true;G.dragging=true;G.dragStart={x:e.clientX,y:e.clientY,cx:G.camX,cy:G.camY};return;}
+  if(G.mode==='road'){_roadDrag=true;}
+  G.dragging=false;
+  G.dragStart={x:e.clientX,y:e.clientY,cx:G.camX,cy:G.camY};
+}
+function onMUp(e){
+  if(_panMode){_panMode=false;G.dragging=false;return;}
+  _roadDrag=false;G.dragging=false;
+}
+
+function onMapMov(e){
+  if(_panMode&&G.dragging){
+    G.camX=G.dragStart.cx+(e.clientX-G.dragStart.x);
+    G.camY=G.dragStart.cy+(e.clientY-G.dragStart.y);
+    renderMap();return;
+  }
+  if(_roadDrag&&G.mode==='road'){const{r,c,ok}=getCell(e);if(ok)doRoad(r,c);}
+  const{r,c,ok}=getCell(e);G._hover=ok?{r,c}:null;
+  if(!ok){document.getElementById('map-tooltip').style.display='none';renderMap();return;}
+  showTip(e,r,c);renderMap();
+}
+
+function getCell(e){
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  const T=BASE_TILE*G.camZoom;
+  const c=Math.floor((mx-G.camX)/T),r=Math.floor((my-G.camY)/T);
+  return{r,c,ok:ib(r,c)};
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+const TERRAIN_COL=['#08101a','#1a1408','#050a18','#0a1408'];
+const TERRAIN_SHADE=['#0e1a28','#2a200a','#080e22','#102012'];
+const HILL_TOP='#1e1a08';
+const WATER_COL='#05101e';
+const WATER_SHIMMER='#0a1a30';
+const FOREST_COL='#081008';
+
+function renderMap(){
+  if(!ctx)return;
+  const T=BASE_TILE*G.camZoom;
+  ctx.fillStyle='#030508';ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const x=G.camX+c*T,y=G.camY+r*T;
+    if(x+T<0||y+T<0||x>canvas.width||y>canvas.height)continue;
+
+    const t=G.grid[r][c];
+    const isRd=G.road[r][c];
+    const ter=G.terrain[r][c];
+
+    // ── TERRAIN ──
+    if(!isRd&&!t){
+      if(ter===0){
+        // Plaine — herbe avec légère texture
+        ctx.fillStyle='#0a1a0c';ctx.fillRect(x,y,T,T);
+        ctx.fillStyle='#0d2010';ctx.fillRect(x+1,y+1,T-2,T-2);
+        // petites touffes d'herbe
+        if((r+c)%3===0){ctx.fillStyle='#102814';ctx.fillRect(x+Math.floor(T*.3),y+Math.floor(T*.6),Math.floor(T*.12),Math.floor(T*.2));}
+        if((r*2+c)%5===0){ctx.fillStyle='#102814';ctx.fillRect(x+Math.floor(T*.65),y+Math.floor(T*.3),Math.floor(T*.1),Math.floor(T*.18));}
+      } else if(ter===1){
+        // Colline — relief 3D prononcé
+        ctx.fillStyle='#1c1808';ctx.fillRect(x,y,T,T);
+        // face éclairée (haut-gauche)
+        ctx.fillStyle='#2e2a10';ctx.fillRect(x+1,y+1,T-3,Math.floor(T*.55));
+        // face sombre (bas)
+        ctx.fillStyle='#120f04';ctx.fillRect(x+1,y+Math.floor(T*.55),T-3,Math.floor(T*.4));
+        // bord lumineux gauche
+        ctx.fillStyle='#3a3418';ctx.fillRect(x+1,y+1,2,T-2);
+        // sommet clair
+        ctx.fillStyle='#4a4220';ctx.fillRect(x+Math.floor(T*.2),y+Math.floor(T*.1),Math.floor(T*.6),Math.floor(T*.2));
+        // emoji montagne si assez grand
+        if(T>18){
+          ctx.font=`${Math.floor(T*.38)}px serif`;
+          ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.globalAlpha=0.7;ctx.fillText('⛰',x+T/2,y+T/2);ctx.globalAlpha=1;
+        }
+      } else if(ter===2){
+        // Eau — effet profondeur + ondulations
+        ctx.fillStyle='#040c1a';ctx.fillRect(x,y,T,T);
+        ctx.fillStyle='#060f22';ctx.fillRect(x+1,y+1,T-2,T-2);
+        // reflets animés (basés sur position fixe)
+        const wave=(r+c)%2;
+        ctx.fillStyle='#0a1e3a';
+        ctx.fillRect(x+2,y+Math.floor(T*(wave?0.3:0.5)),Math.floor(T*.45),2);
+        ctx.fillRect(x+Math.floor(T*.5),y+Math.floor(T*(wave?0.6:0.2)),Math.floor(T*.35),2);
+        ctx.fillStyle='#0d2444';
+        ctx.fillRect(x+Math.floor(T*.15),y+Math.floor(T*.45),Math.floor(T*.25),1);
+        if(T>18){
+          ctx.font=`${Math.floor(T*.38)}px serif`;
+          ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.globalAlpha=0.55;ctx.fillText('🌊',x+T/2,y+T/2);ctx.globalAlpha=1;
+        }
+      } else if(ter===3){
+        // Forêt — arbres denses
+        ctx.fillStyle='#050f05';ctx.fillRect(x,y,T,T);
+        ctx.fillStyle='#071408';ctx.fillRect(x+1,y+1,T-2,T-2);
+        // sous-bois sombre
+        ctx.fillStyle='#091a09';ctx.fillRect(x+2,y+2,T-4,T-4);
+        // canopée
+        ctx.fillStyle='#0d2210';ctx.fillRect(x+Math.floor(T*.1),y+Math.floor(T*.1),Math.floor(T*.8),Math.floor(T*.5));
+        if(T>18){
+          ctx.font=`${Math.floor(T*.4)}px serif`;
+          ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.globalAlpha=0.85;ctx.fillText('🌲',x+T/2,y+T/2);ctx.globalAlpha=1;
+        }
+      }
+      // Bordure subtile entre cases
+      ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(x,y,T,1);ctx.fillRect(x,y,1,T);
+      continue;
+    }
+
+    // ── ROAD ──
+    if(isRd){
+      ctx.fillStyle='#161620';ctx.fillRect(x,y,T,T);
+      const up=isRoad(r-1,c),dn=isRoad(r+1,c),lt=isRoad(r,c-1),rt=isRoad(r,c+1);
+      const m=Math.floor(T*.26);
+      ctx.fillStyle='#1e1e2e';
+      if(up||dn||(!lt&&!rt))ctx.fillRect(x+m,y,T-m*2,T);
+      if(lt||rt||(!up&&!dn))ctx.fillRect(x,y+m,T,T-m*2);
+      ctx.fillRect(x+m,y+m,T-m*2,T-m*2);
+      // traffic color stripe
+      const tc=G.traffic[r][c];
+      if(tc>4){
+        const col=tCol(tc);
+        ctx.fillStyle=col+'77';
+        const s=Math.floor(T*.1);
+        if(up||dn)ctx.fillRect(x+Math.floor(T/2)-s,y,s*2,T);
+        if(lt||rt)ctx.fillRect(x,y+Math.floor(T/2)-s,T,s*2);
+        ctx.fillRect(x+Math.floor(T/2)-s,y+Math.floor(T/2)-s,s*2,s*2);
+      }
+      // center dot
+      ctx.fillStyle=tCol(tc)+'bb';ctx.fillRect(x+Math.floor(T/2)-2,y+Math.floor(T/2)-2,3,3);
+      // dashes
+      ctx.fillStyle='#ffd70022';
+      if((up||dn)&&!lt&&!rt){ctx.fillRect(x+Math.floor(T/2)-1,y+2,2,Math.floor(T/3));ctx.fillRect(x+Math.floor(T/2)-1,y+T-Math.floor(T/3)-2,2,Math.floor(T/3));}
+      if((lt||rt)&&!up&&!dn){ctx.fillRect(x+2,y+Math.floor(T/2)-1,Math.floor(T/3),2);ctx.fillRect(x+T-Math.floor(T/3)-2,y+Math.floor(T/2)-1,Math.floor(T/3),2);}
+      continue;
+    }
+
+    // ── BUILDING ──
+    if(t){
+      const b=B[t];
+      const road_ok=hasAcc(r,c);
+      const elec_ok=!b.elec||isElecPowered(r,c);
+      const fullOk=road_ok&&elec_ok;
+      // Base terrain under building
+      ctx.fillStyle=TERRAIN_COL[ter];ctx.fillRect(x,y,T,T);
+      // Building fill
+      ctx.fillStyle=fullOk?b.col:road_ok?b.col+'88':b.col+'44';
+      ctx.fillRect(x+1,y+1,T-2,T-2);
+      ctx.strokeStyle=fullOk?b.brd:b.brd+'55';
+      ctx.lineWidth=1;ctx.strokeRect(x+1,y+1,T-2,T-2);
+      // Emoji
+      ctx.globalAlpha=fullOk?1:0.4;
+      ctx.font=`${Math.floor(T*.42)}px serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(b.n.split(' ')[0],x+T/2,y+T/2);
+      ctx.globalAlpha=1;
+      // Warning icons
+      if(T>14){
+        ctx.font=`${Math.floor(T*.22)}px serif`;
+        ctx.textBaseline='top';ctx.textAlign='right';
+        if(!road_ok){ctx.fillText('⚠',x+T-2,y+2);}
+        else if(b.elec&&!elec_ok){ctx.fillText('🔌',x+T-2,y+2);}
+        ctx.textBaseline='middle';ctx.textAlign='center';
+      }
+      // Electricity overlay
+      if(G.showElec&&b.elec){
+        ctx.fillStyle=elec_ok?'rgba(255,224,102,0.15)':'rgba(200,0,0,0.25)';
+        ctx.fillRect(x+1,y+1,T-2,T-2);
+      }
+      if(G.showElec&&b.eprod){
+        ctx.fillStyle='rgba(255,180,0,0.3)';
+        ctx.fillRect(x+1,y+1,T-2,T-2);
+      }
+    }
+  }
+
+  // Hover preview
+  if(G._hover){
+    const{r,c}=G._hover;const x=G.camX+c*T,y=G.camY+r*T;
+    ctx.strokeStyle='rgba(58,123,213,0.9)';ctx.lineWidth=2;
+    ctx.strokeRect(x+1,y+1,T-2,T-2);
+    if(G.mode==='road'&&!G.road[r][c]&&G.terrain[r][c]!==2){
+      ctx.fillStyle='rgba(20,30,50,0.5)';ctx.fillRect(x,y,T,T);
+      ctx.fillStyle='rgba(255,215,0,0.3)';
+      const m=Math.floor(T*.26);
+      ctx.fillRect(x+m,y,T-m*2,T);ctx.fillRect(x,y+m,T,T-m*2);
+    }
+  }
+}
+
+// ═══════════════════════════════════════
+// MAP INPUT
+// ═══════════════════════════════════════
+function onMapClick(e){
+  if(G.dragging)return;
+  const{r,c,ok}=getCell(e);if(!ok)return;
+  document.getElementById('map-tooltip').style.display='none';
+  if(G.mode==='demo'){
+    if(G.road[r][c]){G.road[r][c]=false;G.traffic[r][c]=0;log('Route démolie.','warn');}
+    else if(G.grid[r][c]){G.grid[r][c]='';log('Bâtiment démoli.','warn');}
+    _acc=null;simTraffic();recalc();renderMap();updateHUD();if(G.stab===0)renderSidebar();return;
+  }
+  if(G.mode==='info'){showTip(e,r,c);return;}
+  if(G.mode==='road'){doRoad(r,c);return;}
+  doBuild(r,c);
+}
+
+function doRoad(r,c){
+  if(!ib(r,c)||G.road[r][c]||G.grid[r][c])return;
+  if(G.terrain[r][c]===2){alert2('Impossible sur l\'eau !');return;}
+  const tc=terrainRoadCost(r,c);
+  const total=200+tc; // BASE 200$/case (was 50, now 4x)
+  if(!check(total))return;
+  G.money-=total;G.road[r][c]=true;
+  _acc=null;simTraffic();recalc();renderMap();updateHUD();
+}
+
+function doBuild(r,c){
+  const key=G.selBld;const b=B[key];if(!b)return;
+  if(G.terrain[r][c]===2){alert2('Impossible sur l\'eau !');return;}
+  if(G.grid[r][c]){alert2('Case occupée!');return;}
+  if(G.road[r][c]){alert2('Route ici!');return;}
+  const tc=terrainBuildCost(r,c);
+  if(tc===Infinity){alert2('Impossible ici!');return;}
+  const cost=buildCost(key)+tc;
+  if(!check(cost))return;
+  G.money-=cost;G.grid[r][c]=key;
+  _acc=null;
+  buildAcc();
+  if(!hasAcc(r,c))alert2(`⚠️ ${b.n} sans route — efficacité 30%`);
+  if(b.elec&&!isElecPowered(r,c))alert2(`🔌 ${b.n} sans électricité — efficacité 50%`);
+  log(`${b.n} construit. -${fmt(cost)}$`+(tc>0?` (dont ${fmt(tc)}$ terrain)`:''),(tc>0?'warn':'good'));
+  _acc=null;simTraffic();recalc();renderMap();updateHUD();if(G.stab===0)renderSidebar();
+}
+
+function showTip(e,r,c){
+  const tip=document.getElementById('map-tooltip');
+  const rect=canvas.getBoundingClientRect();
+  let html='';
+  const ter=G.terrain[r][c];
+  const terInfo=[
+    {icon:'🌿',name:'PLAINE',desc:'Terrain constructible standard.',roadExtra:'0$',bldExtra:'0$'},
+    {icon:'⛰',name:'COLLINE',desc:'Relief élevé. Construction difficile.',roadExtra:'+400$',bldExtra:'+300$'},
+    {icon:'🌊',name:'EAU',desc:'Inconstructible. Ne peut pas être aménagé.',roadExtra:'✗',bldExtra:'✗'},
+    {icon:'🌲',name:'FORÊT',desc:'À défricher avant construction.',roadExtra:'+200$',bldExtra:'+150$'},
+  ][ter];
+
+  if(G.road[r][c]){
+    const tc=G.traffic[r][c];
+    const status=tc<25?'🟢 Fluide':tc<50?'🟡 Dense':tc<75?'🔴 Bouchon':'🟣 Paralysé';
+    html=`<b>🛣 ROUTE</b><br><span style="color:var(--t3)">${terInfo.icon} ${terInfo.name}</span><br>Trafic: <b>${Math.round(tc)}</b> — ${status}<br>Entretien: 4$/tour`;
+  } else if(G.grid[r][c]){
+    const t=G.grid[r][c],b=B[t];
+    const acc=hasAcc(r,c),pow=!b.elec||isElecPowered(r,c);
+    html=`<b>${b.n}</b><br><span style="color:var(--t3)">${terInfo.icon} ${terInfo.name}</span><br>${acc?'✅ Route':'⚠️ Sans route (30%)'}<br>${b.elec?(pow?'✅ Alimenté ⚡':'🔌 Sans courant (50%)'):''}<br>Prochain coût: ${fmt(buildCost(t))}$<br>Entretien: ${fmt(maintCost(t))}$/tour${b.eprod?'<br>⚡ Produit: '+b.eprod+' MW':''}<br>Trafic: ${b.tgen>0?'+'+b.tgen:b.tgen}`;
+  } else {
+    // Terrain vide — toujours afficher infos
+    const roadCost=200+(ter===1?400:ter===3?200:0);
+    const bldCost=ter===2?null:(ter===1?'+300$':ter===3?'+150$':'0$');
+    html=`<b>${terInfo.icon} ${terInfo.name}</b><br><span style="color:var(--t2)">${terInfo.desc}</span><br>`;
+    if(ter===2){
+      html+=`<span style="color:var(--red)">🚫 Inconstructible</span>`;
+    } else {
+      html+=`Route: ${fmt(roadCost)}$/case<br>`;
+      html+=`Surcoût bâtiment: ${bldCost}<br>`;
+      html+=`Entretien route: 4$/tour`;
+      if(ter===1)html+=`<br><span style="color:var(--acc3)">⚠️ Coûts majorés !</span>`;
+    }
+  }
+  if(!html){tip.style.display='none';return;}
+  tip.innerHTML=html;tip.style.display='block';
+  const tx=Math.min(e.clientX-rect.left+12,canvas.width-185);
+  const ty=Math.max(4,e.clientY-rect.top-50);
+  tip.style.left=tx+'px';tip.style.top=ty+'px';
+}
+
+function setMode(m){
+  G.mode=m;
+  ['build','road','demo','info'].forEach(x=>{const el=document.getElementById('btn-'+x);if(el)el.classList.toggle('act',x===m);});
+  document.getElementById('tl').textContent=m==='road'?'ROUTE':m==='demo'?'DÉMOLIR':m==='info'?'INFOS':G.selBld.toUpperCase();
+}
+
+function toggleElecOverlay(){
+  G.showElec=!G.showElec;
+  document.getElementById('elec-legend').style.display=G.showElec?'block':'none';
+  document.getElementById('btn-elec').classList.toggle('act',G.showElec);
+  renderMap();
+}
+
+// ═══════════════════════════════════════
+// NEXT TURN
+// ═══════════════════════════════════════
+function nextTurn(){
+  G.turn++;
+  G.season=Math.floor(G.turn/4)%4;
+  simTraffic();recalc();
+  Object.entries(G.policies).forEach(([k,v])=>{if(v)POLICIES[k].fx();});
+
+  // Update electricity market prices each turn
+  const mkt=elecMarketPrice();
+  G.elecImportPrice=mkt.imp;G.elecExportPrice=mkt.exp;
+
+  // Electricity import/export financial impact
+  const importCost=G.elecImport*G.elecImportPrice;
+  const localProd=G.elecProd-G.elecImport; // raw local production
+  const surplus=Math.max(0,localProd-G.elecCons);
+  const exportGain=Math.min(G.elecExport,surplus)*G.elecExportPrice;
+
+  const raw=calcIncome();
+  const polCost=Object.entries(G.policies).filter(([,v])=>v).reduce((s,[k])=>s+POLICIES[k].cost,0);
+  const roadCost=countRoads()*4;
+  const net=raw-G.maint-polCost-roadCost-importCost+exportGain;
+  G.money+=net;
+
+  if(importCost>0)log(`⚡ Import élec: -${fmt(importCost)}$ (${G.elecImport}MW à ${G.elecImportPrice}$/MW)`,'warn');
+  if(exportGain>0)log(`⚡ Export élec: +${fmt(exportGain)}$ (${Math.min(G.elecExport,surplus)}MW à ${G.elecExportPrice}$/MW)`,'good');
+
+  // Electricity check — HARD consequence
+  if(!calcElec()){
+    if(G.elecProd===0){
+      G.blackout=true;
+      if(G.turn>3)log('⚡ AUCUNE PRODUCTION ÉLECTRIQUE ! Tous les bâtiments tournent au ralenti.','bad');
+    } else if(G.elecCons>G.elecProd*1.2){
+      if(!G.blackout){G.blackout=true;log('⚡ SURCHARGE ÉLECTRIQUE ! Construisez plus de centrales !','bad');}
+    } else {
+      log(`⚡ Électricité insuffisante (${G.elecProd}/${G.elecCons} MW). Certains bâtiments hors tension.`,'warn');
+    }
+  } else {
+    if(G.blackout){G.blackout=false;log('⚡ Réseau électrique stabilisé.','good');}
+  }
+  document.getElementById('blackout-badge').style.display=G.blackout?'flex':'none';
+
+  // Season
+  const s=SEASONS[G.season];
+  if(s.includes('HIVER')){hp(-4);G.congestion=clamp(G.congestion+10,0,100);log('Hiver: routes verglacées. Trafic pire.','warn');}
+  if(s.includes('ÉTÉ'))hp(2);
+
+  // Pop dynamics
+  if(G.pop<G.housing_cap){
+    const growthBonus=G.congestion<25?1.1:G.congestion>60?0.5:0.9;
+    const g=G.happy>55?Math.floor(G.pop*(0.05*growthBonus)+Math.random()*3):G.happy>35?1:0;
+    if(g>0){G.pop=Math.min(G.housing_cap,G.pop+g);log(`+${g} nouveaux habitants.`,'good');}
+  }
+  if(G.happy<20){const f=Math.ceil(G.pop*.05);G.pop=Math.max(20,G.pop-f);log(`${f} habitants fuient la ville.`,'bad');}
+
+  // Congestion consequences — RÉEL IMPACT
+  if(G.congestion>80){
+    hp(-8);const loss=Math.floor(G.pop*4);G.money-=loss;
+    log(`🚨 VILLE PARALYSÉE ! -8 bonheur, -${fmt(loss)}$ pertes économiques.`,'bad');
+  } else if(G.congestion>60){
+    hp(-4);const loss=Math.floor(G.pop*2);G.money-=loss;
+    log(`🚗 Bouchons sévères. -4 bonheur, -${fmt(loss)}$.`,'warn');
+  } else if(G.congestion>40){
+    hp(-1);log('🚙 Trafic dense.','warn');
+  } else if(G.congestion<12){hp(1);}
+
+  if(G.poll>60){G.health=clamp(G.health-5,0,100);log('Pollution sévère. Santé -5.','bad');}
+  if(G.crime>65){hp(-3);log('Criminalité: Bonheur -3.','bad');}
+  if(G.money<0)alert2('⚠️ DÉFICIT BUDGÉTAIRE !');
+
+  if(G.turn%4===0)spawnEvent();
+  if(G.turn%8===0&&countType('nucleaire')>0&&Math.random()<0.25)spawnEvent(EVENTS.find(e=>e.title.includes('NUCLÉAIRE')));
+  if(G.turn%5===0)autoSave();
+
+  pushH();
+  log(`Tour ${G.turn}: +${fmt(raw)}$ revenus | -${fmt(G.maint)}$ entretien | -${fmt(roadCost)}$ routes | -${fmt(polCost)}$ politiques = ${net>=0?'+':''}${fmt(net)}$`,net>=0?'info':'bad');
+  recalc();updateHUD();renderMap();
+  if(G.rtab===3)renderCharts();
+  if(G.rtab===2)renderElecPane();
+  if(G.rtab===1)renderTrafficPane();
+}
+
+// ═══════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════
+const bstore=[];
+function spawnEvent(ev){
+  ev=ev||EVENTS[Math.floor(Math.random()*EVENTS.length)];
+  const area=document.getElementById('toasts');
+  const t=document.createElement('div');t.className='toast '+ev.type;
+  const base=bstore.length;
+  bstore.push(...ev.ch.map(c=>c.a));
+  t.innerHTML=`<div class="ttt">${ev.title}</div><div style="font-size:5px;color:var(--t2);line-height:1.8;margin-bottom:4px">${ev.text}</div><div class="tch">${ev.ch.map((_,i)=>`<button class="tcb" onclick="doEv(${base+i},this.closest('.toast'))">${ev.ch[i].l}</button>`).join('')}</div>`;
+  area.appendChild(t);
+  setTimeout(()=>{if(t.parentNode)t.remove();},24000);
+}
+function doEv(i,t){if(bstore[i])bstore[i]();if(t)t.remove();simTraffic();recalc();updateHUD();}
+
+// ═══════════════════════════════════════
+// AUTO
+// ═══════════════════════════════════════
+const ASPD=[0,3000,1200,500];const ALBL=['OFF','x1','x2','x4'];
+function toggleAuto(){
+  G.autoMode=(G.autoMode+1)%4;
+  clearInterval(G.autoTimer);
+  if(G.autoMode>0)G.autoTimer=setInterval(nextTurn,ASPD[G.autoMode]);
+  document.getElementById('auto-lbl').textContent=ALBL[G.autoMode];
+}
+
+// ═══════════════════════════════════════
+// HUD
+// ═══════════════════════════════════════
+function updateHUD(){
+  document.getElementById('h-money').textContent=fmt(G.money)+' $';
+  document.getElementById('h-pop').textContent=fmt(G.pop);
+  document.getElementById('h-happy').textContent=G.happy+'%';
+  document.getElementById('h-happy').style.color=G.happy>65?'var(--green)':G.happy>35?'var(--pink)':'var(--red)';
+  document.getElementById('h-income').textContent=(G.income>=0?'+':'')+fmt(G.income)+'/t';
+  document.getElementById('h-income').style.color=G.income>=0?'var(--green)':'var(--red)';
+  document.getElementById('h-jobs').textContent=G.employ+'%';
+  const eOk=G.elecProd>=G.elecCons;
+  document.getElementById('h-elec').textContent=`⚡${G.elecProd}/${G.elecCons}`;
+  document.getElementById('h-elec').style.color=G.blackout?'var(--red)':eOk?'var(--elec)':'var(--acc3)';
+  document.getElementById('elec-hstat').style.background=G.blackout?'rgba(232,69,69,0.15)':'';
+  const tc=Math.round(G.congestion);
+  document.getElementById('h-traffic').textContent=`🚗${tc}%`;
+  document.getElementById('h-traffic').style.color=tCol(tc);
+  document.getElementById('h-turn-b').textContent='T'+G.turn;
+  document.getElementById('h-season').textContent=SEASONS[G.season];
+
+  if(G.rtab===0)renderStatsPane();
+  else if(G.rtab===2)renderElecPane();
+  else if(G.rtab===4)renderTaxPane();
+  else if(G.rtab===5)renderPolPane();
+}
+
+// ═══════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════
+function setStab(i){G.stab=i;document.querySelectorAll('.stab').forEach((t,j)=>t.classList.toggle('active',j===i));renderSidebar();}
+function renderSidebar(){
+  const el=document.getElementById('scontent');el.innerHTML='';
+  if(G.stab===0){
+    CAT_ORDER.forEach(cat=>{
+      const items=Object.entries(B).filter(([,b])=>b.cat===cat);if(!items.length)return;
+      const ch=document.createElement('div');ch.className='bcat';ch.textContent=cat;el.appendChild(ch);
+      items.forEach(([key,b])=>{
+        const cost=buildCost(key);
+        const d=document.createElement('div');
+        d.className='bcard'+(key===G.selBld?' sel':'')+(G.money<cost?' cant':'');
+        const fx=[
+          b.pop?`<span class="pos">+${b.pop}hab</span>`:'',
+          b.jobs?`<span class="pos">+${b.jobs}empl</span>`:'',
+          b.happy>0?`<span class="pos">+bon</span>`:(b.happy<0?`<span class="neg">-bon</span>`:''),
+          b.eprod?`<span class="elec">⚡+${b.eprod}MW</span>`:'',
+          b.elec?`<span style="color:var(--acc3)">🔌${b.elec}MW</span>`:'',
+          b.tgen<0?`<span class="pos">-traf</span>`:(b.tgen>12?`<span class="neg">+traf</span>`:''),
+        ].filter(Boolean).join(' ');
+        const n=countType(key);
+        d.innerHTML=`<div class="bct"><span class="bcn">${b.n}</span><span class="bcc">${fmt(cost)}$</span></div><div class="bcf">${fx||'service'}</div>${n>0?`<div style="font-size:5px;color:var(--t3)">× ${n} construit${n>1?'s':''} (+${Math.round((Math.pow(1.2,n)-1)*100)}% prix)</div>`:''}`;
+        d.onclick=()=>{if(G.money<cost){alert2(`Besoin: ${fmt(cost)}$`);return;}G.selBld=key;setMode('build');renderSidebar();};
+        el.appendChild(d);
+      });
+    });
+  } else if(G.stab===1){
+    const ch=document.createElement('div');ch.className='bcat';ch.textContent='ROUTES';el.appendChild(ch);
+    const info=document.createElement('div');
+    const roadBase=200;
+    info.style.cssText='font-size:5px;color:var(--t2);line-height:2;margin-bottom:6px;background:var(--p2);border:1px solid var(--b1);padding:6px;border-radius:2px';
+    info.innerHTML=`Coût: <span style="color:var(--gold)">${roadBase}$/case</span><br>+colline: <span style="color:var(--gold)">+400$</span><br>+forêt: <span style="color:var(--gold)">+200$</span><br>Entretien: <span style="color:var(--red)">4$/case/tour</span><br>Routes totales: <b>${countRoads()}</b> cases<br>Coût entretien: <span style="color:var(--red)">-${fmt(countRoads()*4)}$/tour</span><br><br>⛰ Eau = inconstructible<br>🖱 Clic-glisser pour tracer`;
+    el.appendChild(info);
+    const btn=document.createElement('button');btn.className='pb'+(G.mode==='road'?' on':'');
+    btn.innerHTML='🛣 TRACER ROUTE';btn.onclick=()=>{setMode('road');renderSidebar();};el.appendChild(btn);
+    const ch2=document.createElement('div');ch2.className='bcat';ch2.textContent='AMÉLIORATIONS';el.appendChild(ch2);
+    [
+      {l:'🚦 Feux intelligents (-700$)',a:()=>{if(!check(700))return;G.money-=700;G.congestion=clamp(G.congestion-18,0,100);log('Feux: congestion -18.','good');updateHUD();}},
+      {l:'🛣 Voie rapide (-2000$)',a:()=>{if(!check(2000))return;G.money-=2000;G.congestion=clamp(G.congestion-25,0,100);log('Voie rapide: -25 congestion.','good');updateHUD();}},
+      {l:'🔄 Rond-point (-600$)',a:()=>{if(!check(600))return;G.money-=600;G.congestion=clamp(G.congestion-10,0,100);log('Rond-point construit.','good');updateHUD();}},
+      {l:'🚇 Tunnel (-5000$)',a:()=>{if(!check(5000))return;G.money-=5000;G.congestion=clamp(G.congestion-35,0,100);hp(5);log('Tunnel: -35 congestion!','good');updateHUD();}},
+    ].forEach(u=>{const b=document.createElement('button');b.className='pb';b.textContent=u.l;b.onclick=u.a;el.appendChild(b);});
+  } else if(G.stab===2){
+    const ch=document.createElement('div');ch.className='bcat';ch.textContent='ÉNERGIE';el.appendChild(ch);
+    const elecOk=G.elecProd>=G.elecCons;
+    const d=document.createElement('div');
+    d.className='elec-panel';
+    d.innerHTML=`<div class="elec-title">⚡ RÉSEAU ÉLECTRIQUE</div>
+      <div style="font-size:7px;margin-bottom:5px;color:${G.blackout?'var(--red)':elecOk?'var(--green)':'var(--acc3)'}">
+        ${G.blackout?'🔴 PANNE GÉNÉRALE':elecOk?'🟢 STABLE':'🟡 DÉFICIT'}
+      </div>
+      <table class="bct2">
+        <tr><td>Production</td><td style="color:var(--elec)">${G.elecProd} MW</td></tr>
+        <tr><td>Consommation</td><td style="color:${elecOk?'var(--green)':'var(--red)'}">${G.elecCons} MW</td></tr>
+        <tr><td>Balance</td><td style="color:${G.elecProd-G.elecCons>=0?'var(--green)':'var(--red)'}">${G.elecProd-G.elecCons>=0?'+':''}${G.elecProd-G.elecCons} MW</td></tr>
+      </table>
+      <div style="font-size:5px;color:var(--t2);margin-top:5px;line-height:1.8">
+        💡 Construisez des centrales (⚡🌀☀️☢️) puis reliez-les au réseau via des routes ou en les plaçant à proximité.
+      </div>`;
+    el.appendChild(d);
+    const ch2=document.createElement('div');ch2.className='bcat';ch2.textContent='BOUCHONS';el.appendChild(ch2);
+    const tc=Math.round(G.congestion);
+    const d2=document.createElement('div');
+    d2.style.cssText='font-size:5px;color:var(--t2);line-height:2;background:var(--p2);border:1px solid var(--b1);padding:6px;border-radius:2px';
+    d2.innerHTML=`Congestion: <span style="color:${tCol(tc)}">${tc}%</span><br>Statut: ${tc<20?'🟢 Fluide':tc<40?'🟡 Acceptable':tc<60?'🟠 Dense':tc<80?'🔴 Bouchons':'🟣 Paralysé'}<br><br>Impact bonheur: ${tc>70?'-12':tc>50?'-6':tc>30?'-2':'0'}<br>Pertes/tour: -${tc>80?fmt(G.pop*4)+'$':tc>60?fmt(G.pop*2)+'$':'0$'}`;
+    el.appendChild(d2);
+  } else if(G.stab===3){
+    const ch=document.createElement('div');ch.className='bcat';ch.textContent='OUTILS';el.appendChild(ch);
+    [{key:'demo',icon:'💥',label:'DÉMOLIR'},{key:'info',icon:'🔍',label:'INSPECTER'}].forEach(t=>{
+      const d=document.createElement('div');d.className='bcard'+(G.mode===t.key?' sel':'');
+      d.innerHTML=`<div class="bct"><span class="bcn">${t.icon} ${t.label}</span></div>`;
+      d.onclick=()=>{setMode(t.key);renderSidebar();};el.appendChild(d);
+    });
+  } else {
+    const ch=document.createElement('div');ch.className='bcat';ch.textContent='JOURNAL';el.appendChild(ch);
+    const l=document.getElementById('log-list');
+    if(l)Array.from(l.children).slice(0,14).forEach(x=>{el.appendChild(x.cloneNode(true));});
+  }
+}
+
+// ═══════════════════════════════════════
+// RIGHT PANEL
+// ═══════════════════════════════════════
+function setRtab(i){G.rtab=i;document.querySelectorAll('.rtab').forEach((t,j)=>t.classList.toggle('active',j===i));renderRpanel();}
+function renderRpanel(){
+  const el=document.getElementById('rcontent');el.innerHTML='';
+  if(G.rtab===0)renderStatsPane();
+  else if(G.rtab===1)renderTrafficPane();
+  else if(G.rtab===2)renderElecPane();
+  else if(G.rtab===3)renderCharts();
+  else if(G.rtab===4)renderTaxPane();
+  else if(G.rtab===5)renderPolPane();
+  else renderLogPane();
+}
+
+function statRow(el,label,val,cls,inv){
+  const v=Math.round(val);
+  const col=inv?(v>60?'var(--red)':v>30?'var(--acc3)':'var(--green)'):(v>60?'var(--green)':v>30?'var(--acc3)':'var(--red)');
+  const d=document.createElement('div');d.className='sb';
+  d.innerHTML=`<div class="sbh"><span class="sbl">${label}</span><span class="sbv" style="color:${col}">${v}%</span></div><div class="barbg"><div class="barf ${cls}" style="width:${clamp(v,0,100)}%"></div></div>`;
+  el.appendChild(d);
+}
+function sec(el,t){const d=document.createElement('div');d.className='sec';d.textContent=t;el.appendChild(d);}
+function tableRows(el,rows){
+  const t=document.createElement('table');t.className='bct2';
+  rows.forEach(([l,v,c])=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${l}</td><td ${c?`style="color:${c}"`:''}>${v}</td>`;t.appendChild(tr);});
+  el.appendChild(t);
+}
+
+function renderStatsPane(){
+  if(G.rtab!==0)return;
+  const el=document.getElementById('rcontent');el.innerHTML='';
+  sec(el,'INDICATEURS');
+  statRow(el,'BONHEUR',G.happy,'f-pink',false);
+  statRow(el,'EMPLOI',G.employ,'f-blue',false);
+  statRow(el,'SANTÉ',G.health,'f-green',false);
+  statRow(el,'ÉDUCATION',G.edu,'f-cyan',false);
+  statRow(el,'SÉCURITÉ',G.secu,'f-yellow',false);
+  statRow(el,'POLLUTION',G.poll,'f-red',true);
+  statRow(el,'CRIMINALITÉ',G.crime,'f-red',true);
+  statRow(el,'TRAFIC',G.congestion,'f-orange',true);
+  const eRatio=G.elecProd>0?Math.min(100,Math.round(G.elecProd/Math.max(1,G.elecCons)*100)):0;
+  statRow(el,'ÉLECTRICITÉ',eRatio,'f-elec',false);
+
+  sec(el,'VILLE');
+  const roadCost=countRoads()*4;
+  const polCost=Object.entries(G.policies).filter(([,v])=>v).reduce((s,[k])=>s+POLICIES[k].cost,0);
+  tableRows(el,[
+    ['👥 POP',`${fmt(G.pop)} / ${fmt(G.housing_cap)}`],
+    ['💼 EMPLOIS',fmt(G.jobs_total)],
+    ['⚡ ÉLEC',`${G.elecProd} / ${G.elecCons} MW`,G.elecProd>=G.elecCons?'var(--green)':'var(--red)'],
+    ['🛣 ROUTES',`${countRoads()} cases`],
+    ['🔗 ACCÈS ROUTE',G.roadAccessBonus+'%'],
+    ['🏛 ENTRETIEN',`-${fmt(G.maint)}$/t`,'var(--red)'],
+    ['🛣 ROUTES ENTRET.',`-${fmt(roadCost)}$/t`,'var(--red)'],
+    ['🏛 POLITIQUES',`-${fmt(polCost)}$/t`,'var(--red)'],
+    ['📈 REVENU NET',(G.income>=0?'+':'')+fmt(G.income)+'$/t',G.income>=0?'var(--green)':'var(--red)'],
+  ]);
+
+  sec(el,'BÂTIMENTS');
+  const blds=allBlds();
+  const t=document.createElement('table');t.className='bct2';
+  Object.entries(blds).forEach(([k,n])=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${B[k].n}</td><td>×${n}</td>`;t.appendChild(tr);});
+  if(!Object.keys(blds).length){const tr=document.createElement('tr');tr.innerHTML=`<td colspan="2" style="color:var(--t3)">Aucun</td>`;t.appendChild(tr);}
+  el.appendChild(t);
+}
+
+function renderElecPane(){
+  if(G.rtab!==2)return;
+  const el=document.getElementById('rcontent');el.innerHTML='';
+  sec(el,'RÉSEAU ÉLECTRIQUE');
+  const elecOk=G.elecProd>=G.elecCons;
+  const d=document.createElement('div');d.className='elec-panel';
+  d.innerHTML=`<div class="elec-title">⚡ BILAN ÉNERGÉTIQUE</div>
+    <div style="font-size:8px;color:${G.blackout?'var(--red)':elecOk?'var(--green)':'var(--acc3)'};margin-bottom:6px">
+      ${G.blackout?'🔴 PANNE GÉNÉRALE':elecOk?'🟢 RÉSEAU STABLE':'🟡 PRODUCTION INSUFFISANTE'}
+    </div>`;
+  // Production bar
+  const pct=G.elecCons>0?Math.min(100,Math.round(G.elecProd/G.elecCons*100)):100;
+  d.innerHTML+=`<div style="font-size:5px;color:var(--t2);margin-bottom:2px">COUVERTURE ${pct}%</div>
+    <div class="barbg" style="margin-bottom:8px"><div class="barf f-elec" style="width:${pct}%"></div></div>`;
+  el.appendChild(d);
+
+  tableRows(el,[
+    ['Production totale',G.elecProd+' MW','var(--elec)'],
+    ['Consommation totale',G.elecCons+' MW',elecOk?'var(--green)':'var(--red)'],
+    ['Balance',(G.elecProd-G.elecCons>=0?'+':'')+(G.elecProd-G.elecCons)+' MW',G.elecProd-G.elecCons>=0?'var(--green)':'var(--red)'],
+    ['État blackout',G.blackout?'OUI':'NON',G.blackout?'var(--red)':'var(--green)'],
+  ]);
+
+  sec(el,'SOURCES DE PRODUCTION');
+  const src=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=G.grid[r][c];if(t&&B[t]&&B[t].eprod)src.push({n:B[t].n,p:B[t].eprod});}
+  if(src.length){tableRows(el,src.map(s=>[s.n,'+'+s.p+' MW','var(--elec)']));}
+  else{const d2=document.createElement('div');d2.style.cssText='font-size:5px;color:var(--red);padding:5px';d2.textContent='⚠️ Aucune source ! Construisez une centrale (onglet 🏗 > ÉNERGIE).';el.appendChild(d2);}
+
+  sec(el,'PLUS GROS CONSOMMATEURS');
+  const cons=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=G.grid[r][c];if(t&&B[t]&&B[t].elec)cons.push({n:B[t].n,c:B[t].elec});}
+  cons.sort((a,b)=>b.c-a.c);
+  tableRows(el,cons.slice(0,8).map(c=>[c.n,c.c+' MW','var(--acc3)']));
+
+  sec(el,'EFFETS PANNE');
+  [
+    ['Efficacité bâtiments',G.blackout?'50%':'100%',G.blackout?'var(--red)':'var(--green)'],
+    ['Revenus',G.blackout?'-60%':'100%',G.blackout?'var(--red)':'var(--green)'],
+    ['Impact bonheur',G.blackout?'-20':elecOk?'0':'-8',(!elecOk||G.blackout)?'var(--red)':'var(--green)'],
+  ].forEach(row=>{const t=document.createElement('table');t.className='bct2';const tr=document.createElement('tr');tr.innerHTML=`<td>${row[0]}</td><td style="color:${row[2]}">${row[1]}</td>`;t.appendChild(tr);el.appendChild(t);});
+
+  // ── IMPORT / EXPORT ──
+  sec(el,'🌐 MARCHÉ MONDIAL');
+  const mktDiv=document.createElement('div');
+  mktDiv.style.cssText='background:#110e00;border:1px solid var(--elec2);border-radius:2px;padding:7px;margin-bottom:6px;font-size:5px;line-height:2';
+  const localProd2=G.elecProd-G.elecImport;
+  const surplus2=Math.max(0,localProd2-G.elecCons);
+  mktDiv.innerHTML=`
+    <div style="color:var(--elec);margin-bottom:4px">⚡ PRIX DU MARCHÉ CE TOUR</div>
+    <div>Import: <b style="color:var(--red)">${G.elecImportPrice}$/MW</b> &nbsp; Export: <b style="color:var(--green)">${G.elecExportPrice}$/MW</b></div>
+    <div style="color:var(--t3);margin-top:2px">Surplus local: ${surplus2} MW disponibles à l'export</div>
+  `;
+  el.appendChild(mktDiv);
+
+  // IMPORT slider
+  const impDiv=document.createElement('div');impDiv.className='taxrow';
+  impDiv.innerHTML=`
+    <div class="taxlbl">📥 IMPORTER</div>
+    <div class="taxsub">Acheter de l'électricité au marché mondial.<br>Coûte <span style="color:var(--red)">${G.elecImportPrice}$/MW/tour</span>. Utile si production insuffisante.</div>
+    <input type="range" min="0" max="200" step="10" value="${G.elecImport}" id="imp-slider"
+      oninput="G.elecImport=+this.value;document.getElementById('imp-val').textContent=this.value+' MW (-'+Math.round(this.value*${G.elecImportPrice})+'$/t)';recalc();updateHUD()">
+    <div class="taxval" id="imp-val">${G.elecImport} MW (-${Math.round(G.elecImport*G.elecImportPrice)}$/t)</div>
+  `;
+  el.appendChild(impDiv);
+
+  // EXPORT slider
+  const expDiv=document.createElement('div');expDiv.className='taxrow';
+  expDiv.innerHTML=`
+    <div class="taxlbl">📤 EXPORTER</div>
+    <div class="taxsub">Vendre le surplus au marché mondial.<br>Rapporte <span style="color:var(--green)">${G.elecExportPrice}$/MW/tour</span>. Surplus actuel: ${surplus2} MW.</div>
+    <input type="range" min="0" max="${Math.max(0,surplus2)}" step="5" value="${Math.min(G.elecExport,surplus2)}" id="exp-slider"
+      oninput="G.elecExport=+this.value;document.getElementById('exp-val').textContent=this.value+' MW (+'+Math.round(this.value*${G.elecExportPrice})+'$/t)'">
+    <div class="taxval" id="exp-val">${Math.min(G.elecExport,surplus2)} MW (+${Math.round(Math.min(G.elecExport,surplus2)*G.elecExportPrice)}$/t)</div>
+  `;
+  el.appendChild(expDiv);
+
+  tableRows(el,[
+    ['Coût import/tour',`-${fmt(G.elecImport*G.elecImportPrice)}$`,G.elecImport>0?'var(--red)':'var(--t2)'],
+    ['Gain export/tour',`+${fmt(Math.min(G.elecExport,surplus2)*G.elecExportPrice)}$`,G.elecExport>0?'var(--green)':'var(--t2)'],
+  ]);
+}
+
+function renderTrafficPane(){
+  if(G.rtab!==1)return;
+  const el=document.getElementById('rcontent');el.innerHTML='';
+  const tc=Math.round(G.congestion);
+  sec(el,'TRAFIC');
+  const d=document.createElement('div');
+  d.style.cssText='background:var(--p2);border:1px solid var(--b1);border-radius:2px;padding:8px;margin-bottom:6px;text-align:center';
+  const st=tc<20?'🟢 FLUIDE':tc<40?'🟡 BON':tc<60?'🟠 DENSE':tc<80?'🔴 BOUCHONS':'🟣 PARALYSÉ';
+  d.innerHTML=`<div style="font-size:11px;margin:4px 0">${st}</div><div style="font-size:10px;color:${tCol(tc)}">${tc}%</div>`;
+  el.appendChild(d);
+  tableRows(el,[
+    ['Impact bonheur',tc>70?'-12':tc>50?'-6':tc>30?'-2':'0',tc>30?'var(--red)':'var(--green)'],
+    ['Pertes éco/tour',tc>80?fmt(G.pop*4)+'$':tc>60?fmt(G.pop*2)+'$':'0$',tc>60?'var(--red)':'var(--green)'],
+    ['Impact pollution','+'+Math.round(G.congestion*.35)+'%','var(--red)'],
+  ]);
+  sec(el,'GÉNÉRATEURS DE TRAFIC');
+  const gens=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=G.grid[r][c];if(t&&B[t]&&B[t].tgen>0)gens.push({n:B[t].n,g:B[t].tgen});}
+  gens.sort((a,b)=>b.g-a.g);
+  tableRows(el,gens.slice(0,8).map(g=>[g.n,'+'+g.g,g.g>12?'var(--red)':'var(--acc3)']));
+  sec(el,'RÉDUCTEURS');
+  const reds=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=G.grid[r][c];if(t&&B[t]&&B[t].tgen<0)reds.push({n:B[t].n,g:B[t].tgen});}
+  tableRows(el,reds.map(r=>[r.n,''+r.g,'var(--green)']));
+}
+
+let charts={};
+function renderCharts(){
+  if(G.rtab!==3)return;
+  const el=document.getElementById('rcontent');el.innerHTML='';
+  sec(el,'COURBES HISTORIQUES');
+  const defs=[
+    {key:'money',label:'TRÉSOR',color:'#ffd700'},
+    {key:'pop',label:'POPULATION',color:'#00c9a7'},
+    {key:'happy',label:'BONHEUR',color:'#ff6eb4'},
+    {key:'employ',label:'EMPLOI',color:'#3a7bd5'},
+    {key:'traffic',label:'TRAFIC',color:'#e84545'},
+    {key:'elec',label:'ÉLEC %',color:'#ffe066'},
+    {key:'poll',label:'POLLUTION',color:'#ff7722'},
+  ];
+  defs.forEach(cd=>{
+    const w=document.createElement('div');w.className='cw';
+    w.innerHTML=`<div class="ct">${cd.label}</div><canvas id="ch-${cd.key}" height="75"></canvas>`;
+    el.appendChild(w);
+  });
+  setTimeout(()=>{
+    defs.forEach(cd=>{
+      const cvs=document.getElementById('ch-'+cd.key);if(!cvs)return;
+      if(charts[cd.key])charts[cd.key].destroy();
+      const data=G.history[cd.key];
+      const labels=data.map((_,i)=>'T'+(G.turn-data.length+1+i));
+      charts[cd.key]=new Chart(cvs,{type:'line',
+        data:{labels,datasets:[{data,borderColor:cd.color,backgroundColor:cd.color+'22',borderWidth:1.5,pointRadius:0,fill:true,tension:.35}]},
+        options:{animation:false,responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{x:{ticks:{color:'#3d5a7a',font:{size:7,family:"'Press Start 2P'"},maxTicksLimit:5},grid:{color:'#0e1a2a'}},
+                  y:{ticks:{color:'#3d5a7a',font:{size:7,family:"'Press Start 2P'"},maxTicksLimit:4},grid:{color:'#0e1a2a'}}}}});
+    });
+  },60);
+}
+
+function renderTaxPane(){
+  if(G.rtab!==4)return;
+  const el=document.getElementById('rcontent');el.innerHTML='';
+  sec(el,'FISCALITÉ');
+  [{key:'taxRate',lbl:'IMPÔT HABITANT',sub:'pop × taux. Bonheur -si >25%',min:0,max:40,unit:'%'},
+   {key:'taxBiz', lbl:'TAXE ENTREPRISES',sub:'emplois × taux/2',min:0,max:30,unit:'%'}
+  ].forEach(tx=>{
+    const d=document.createElement('div');d.className='taxrow';
+    d.innerHTML=`<div class="taxlbl">${tx.lbl}</div><div class="taxsub">${tx.sub}</div><input type="range" min="${tx.min}" max="${tx.max}" step="1" value="${G[tx.key]}" oninput="G['${tx.key}']=+this.value;this.nextElementSibling.textContent=this.value+' ${tx.unit}';recalc();updateHUD()"><div class="taxval">${G[tx.key]} ${tx.unit}</div>`;
+    el.appendChild(d);
+  });
+  sec(el,'BUDGET PRÉVISIONNEL');
+  const pc=Object.entries(G.policies).filter(([,v])=>v).reduce((s,[k])=>s+POLICIES[k].cost,0);
+  const rc=countRoads()*4;
+  const net=calcIncome()-G.maint-pc-rc;
+  tableRows(el,[
+    ['Impôts hab','+'+fmt(Math.floor(G.pop*G.taxRate*.9))+'$','var(--green)'],
+    ['Taxes biz','+'+fmt(Math.floor(G.jobs_total*G.taxBiz*.5))+'$','var(--green)'],
+    ['Entretien bâtiments','-'+fmt(G.maint)+'$','var(--red)'],
+    ['Entretien routes','-'+fmt(rc)+'$','var(--red)'],
+    ['Politiques','-'+fmt(pc)+'$','var(--red)'],
+    ['NET',(net>=0?'+':'')+fmt(net)+'$',net>=0?'var(--green)':'var(--red)'],
+  ]);
+  sec(el,'SUBVENTIONS');
+  [
+    {l:'💊 Santé (-500$)',a:()=>{if(!check(500))return;G.money-=500;G.health=clamp(G.health+14,0,100);log('Santé +14.','good');updateHUD();}},
+    {l:'📚 Éducation (-450$)',a:()=>{if(!check(450))return;G.money-=450;G.edu=clamp(G.edu+14,0,100);log('Édu +14.','good');updateHUD();}},
+    {l:'🌿 Dépollution (-400$)',a:()=>{if(!check(400))return;G.money-=400;G.poll=clamp(G.poll-14,0,100);log('Pollution -14.','good');updateHUD();}},
+    {l:'🎁 Prime citoyens (-600$)',a:()=>{if(!check(600))return;G.money-=600;hp(18);log('Bonheur +18.','good');updateHUD();}},
+    {l:'🚗 Plan trafic (-900$)',a:()=>{if(!check(900))return;G.money-=900;G.congestion=clamp(G.congestion-22,0,100);log('Congestion -22.','good');updateHUD();}},
+    {l:'⚡ Urgence électrique (-1200$)',a:()=>{if(!check(1200))return;G.money-=1200;G.blackout=false;log('Réseau électrique stabilisé.','good');recalc();updateHUD();}},
+  ].forEach(s=>{const b=document.createElement('button');b.className='pb';b.textContent=s.l;b.onclick=s.a;el.appendChild(b);});
+}
+
+function renderPolPane(){
+  if(G.rtab!==5)return;
+  const el=document.getElementById('rcontent');el.innerHTML='';
+  sec(el,'POLITIQUES ACTIVES');
+  Object.entries(POLICIES).forEach(([key,pol])=>{
+    const on=G.policies[key];
+    const b=document.createElement('button');b.className='pb'+(on?' on':'');
+    b.innerHTML=`${pol.n}<br><span style="color:var(--gold)">${on?'✅ ACTIF · ':''}${pol.cost}$/tour</span>`;
+    b.onclick=()=>{G.policies[key]=!G.policies[key];log(`${pol.n} ${G.policies[key]?'activée':'désactivée'}.`,G.policies[key]?'good':'warn');recalc();updateHUD();renderPolPane();};
+    el.appendChild(b);
+  });
+  const pc=Object.entries(G.policies).filter(([,v])=>v).reduce((s,[k])=>s+POLICIES[k].cost,0);
+  sec(el,'RÉSUMÉ');
+  tableRows(el,[
+    ['Total politiques','-'+fmt(pc)+'$/tour','var(--red)'],
+    ['Politiques actives',Object.values(G.policies).filter(Boolean).length+'/6'],
+  ]);
+}
+
+function renderLogPane(){
+  if(G.rtab!==6)return;
+  const el=document.getElementById('rcontent');el.innerHTML='';
+  sec(el,'JOURNAL');
+  const d=document.createElement('div');d.id='log-list';el.appendChild(d);
+}
+
+// ═══════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════
+const SAVE_KEY='pixelmayor_v4_save';
+const SAVE_SLOTS=3;
+
+function getSaveData(){
+  return {
+    money:G.money,turn:G.turn,season:G.season,
+    taxRate:G.taxRate,taxBiz:G.taxBiz,
+    pop:G.pop,happy:G.happy,employ:G.employ,
+    health:G.health,edu:G.edu,secu:G.secu,poll:G.poll,crime:G.crime,
+    jobs_total:G.jobs_total,housing_cap:G.housing_cap,maint:G.maint,
+    congestion:G.congestion,blackout:G.blackout,
+    elecImport:G.elecImport,elecExport:G.elecExport,
+    policies:JSON.parse(JSON.stringify(G.policies)),
+    history:JSON.parse(JSON.stringify(G.history)),
+    grid:G.grid.map(r=>[...r]),
+    road:G.road.map(r=>[...r]),
+    terrain:G.terrain.map(r=>[...r]),
+    savedAt:Date.now(),
+  };
+}
+
+function saveGame(slot=0){
+  try{
+    const all=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');
+    all[slot]=getSaveData();
+    localStorage.setItem(SAVE_KEY,JSON.stringify(all));
+    log(`💾 Partie sauvegardée (emplacement ${slot+1}).`,'good');
+    alert2(`💾 Sauvegarde ${slot+1} effectuée !`);
+    renderSaveMenu();
+  }catch(e){alert2('Erreur de sauvegarde: '+e.message);}
+}
+
+function loadGame(slot=0){
+  try{
+    const all=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');
+    const d=all[slot];
+    if(!d){alert2(`Aucune sauvegarde dans l'emplacement ${slot+1}.`);return;}
+    clearInterval(G.autoTimer);
+    // Restore scalar fields
+    Object.assign(G,{
+      money:d.money,turn:d.turn,season:d.season,
+      taxRate:d.taxRate,taxBiz:d.taxBiz,
+      pop:d.pop,happy:d.happy,employ:d.employ,
+      health:d.health,edu:d.edu,secu:d.secu,poll:d.poll,crime:d.crime,
+      jobs_total:d.jobs_total,housing_cap:d.housing_cap,maint:d.maint,
+      congestion:d.congestion,blackout:d.blackout,
+      elecImport:d.elecImport||0,elecExport:d.elecExport||0,
+      autoMode:0,showElec:false,trafficFlow:0,
+    });
+    G.policies=d.policies;
+    G.history=d.history;
+    // Restore grids
+    G.grid=d.grid.map(r=>[...r]);
+    G.road=d.road.map(r=>[...r]);
+    G.terrain=d.terrain.map(r=>[...r]);
+    // Reset derived
+    G.traffic=[];G.elecGrid=[];
+    for(let r=0;r<ROWS;r++){G.traffic[r]=[];G.elecGrid[r]=[];for(let c=0;c<COLS;c++){G.traffic[r][c]=0;G.elecGrid[r][c]=false;}}
+    document.getElementById('auto-lbl').textContent='OFF';
+    Object.keys(charts).forEach(k=>{if(charts[k])charts[k].destroy();});charts={};
+    bstore.length=0;
+    document.getElementById('toasts').innerHTML='';
+    _acc=null;simTraffic();recalc();renderMap();renderSidebar();renderRpanel();updateHUD();
+    log(`📂 Partie chargée (emplacement ${slot+1}, tour ${d.turn}).`,'good');
+    alert2(`📂 Sauvegarde ${slot+1} chargée !`);
+  }catch(e){alert2('Erreur de chargement: '+e.message);console.error(e);}
+}
+
+function deleteSave(slot){
+  try{
+    const all=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');
+    delete all[slot];
+    localStorage.setItem(SAVE_KEY,JSON.stringify(all));
+    renderSaveMenu();
+    log(`🗑 Sauvegarde ${slot+1} supprimée.`,'warn');
+  }catch(e){}
+}
+
+function getSaveSlots(){
+  try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');}catch(e){return {};}
+}
+
+// Save menu modal
+function openSaveMenu(){
+  let modal=document.getElementById('save-modal');
+  if(modal){modal.remove();return;}
+  modal=document.createElement('div');
+  modal.id='save-modal';
+  modal.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--p1);border:2px solid var(--acc);border-radius:6px;padding:16px;z-index:200;min-width:280px;font-family:var(--font)';
+  modal.innerHTML=`<div style="font-size:8px;color:var(--acc);margin-bottom:10px">💾 SAUVEGARDES</div><div id="save-slots"></div><button onclick="document.getElementById('save-modal').remove()" style="margin-top:8px;background:var(--p2);border:1px solid var(--b1);color:var(--t1);font-family:var(--font);font-size:6px;padding:5px 10px;cursor:pointer;border-radius:2px;width:100%">✕ FERMER</button>`;
+  document.body.appendChild(modal);
+  renderSaveMenu();
+}
+
+function renderSaveMenu(){
+  const el=document.getElementById('save-slots');if(!el)return;
+  el.innerHTML='';
+  const saves=getSaveSlots();
+  for(let i=0;i<SAVE_SLOTS;i++){
+    const s=saves[i];
+    const d=document.createElement('div');
+    d.style.cssText='background:var(--p2);border:1px solid var(--b1);border-radius:2px;padding:7px;margin-bottom:5px';
+    if(s){
+      const date=new Date(s.savedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      d.innerHTML=`<div style="font-size:6px;color:var(--t1);margin-bottom:4px">Slot ${i+1}: Tour ${s.turn} · ${fmt(s.pop)} hab · ${fmt(s.money)}$</div>
+        <div style="font-size:5px;color:var(--t3);margin-bottom:5px">${date}</div>
+        <div style="display:flex;gap:4px">
+          <button onclick="loadGame(${i})" style="flex:1;background:var(--acc);border:none;color:#fff;font-family:var(--font);font-size:5px;padding:4px;cursor:pointer;border-radius:2px">📂 CHARGER</button>
+          <button onclick="saveGame(${i})" style="flex:1;background:var(--p3);border:1px solid var(--b2);color:var(--t1);font-family:var(--font);font-size:5px;padding:4px;cursor:pointer;border-radius:2px">💾 ÉCRASER</button>
+          <button onclick="deleteSave(${i})" style="background:var(--p3);border:1px solid var(--red);color:var(--red);font-family:var(--font);font-size:5px;padding:4px 6px;cursor:pointer;border-radius:2px">🗑</button>
+        </div>`;
+    } else {
+      d.innerHTML=`<div style="font-size:6px;color:var(--t3);margin-bottom:5px">Slot ${i+1}: Vide</div>
+        <button onclick="saveGame(${i})" style="width:100%;background:var(--p3);border:1px solid var(--acc);color:var(--acc);font-family:var(--font);font-size:5px;padding:5px;cursor:pointer;border-radius:2px">💾 SAUVEGARDER ICI</button>`;
+    }
+    el.appendChild(d);
+  }
+}
+
+// Auto-save every 5 turns to slot 99
+function autoSave(){
+  try{
+    const all=JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');
+    all[99]=getSaveData();
+    localStorage.setItem(SAVE_KEY,JSON.stringify(all));
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════
+function resetGame(){
+  if(!confirm('Recommencer ?'))return;
+  clearInterval(G.autoTimer);
+  Object.assign(G,{money:5000,turn:1,season:0,taxRate:12,taxBiz:8,autoMode:0,happy:50,pop:80,congestion:0,trafficFlow:0,blackout:false,elecProd:0,elecCons:0,elecImport:0,elecExport:0,elecImportPrice:8,elecExportPrice:5,showElec:false});
+  G.policies={healthcare:false,education:false,police:false,transport:false,ecology:false,carfree:false};
+  G.history={money:[],pop:[],happy:[],employ:[],poll:[],traffic:[],elec:[]};
+  document.getElementById('auto-lbl').textContent='OFF';
+  Object.keys(charts).forEach(k=>{if(charts[k])charts[k].destroy();});charts={};
+  bstore.length=0;
+  document.getElementById('toasts').innerHTML='';
+  document.getElementById('blackout-badge').style.display='none';
+  initGrid();_acc=null;simTraffic();recalc();renderMap();renderSidebar();renderRpanel();updateHUD();
+  log('Nouvelle partie! Construisez une centrale avant tout !','warn');
+}
+
+// ═══════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════
+function boot(){
+  initGrid();setupCanvas();
+  _acc=null;simTraffic();recalc();pushH();
+  renderSidebar();renderRpanel();updateHUD();
+
+  // Check for autosave
+  try{
+    const saves=getSaveSlots();
+    if(saves[99]){
+      const d=saves[99];
+      const t=document.createElement('div');
+      t.className='toast warn';
+      t.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:300;min-width:260px;text-align:center';
+      t.innerHTML=`<div class="ttt">💾 SAUVEGARDE TROUVÉE</div>
+        <div style="font-size:5px;color:var(--t2);margin-bottom:6px">Tour ${d.turn} · ${fmt(d.pop)} hab · ${fmt(d.money)}$</div>
+        <div class="tch">
+          <button class="tcb" onclick="loadGame(99);this.closest('.toast').remove()" style="color:var(--green);border-color:var(--green)">📂 REPRENDRE LA PARTIE</button>
+          <button class="tcb" onclick="this.closest('.toast').remove()">🆕 NOUVELLE PARTIE</button>
+        </div>`;
+      document.body.appendChild(t);
+    }
+  }catch(e){}
+
+  log('⚡ PRIORITÉ: construisez une CENTRALE ou une ÉOLIENNE !','bad');
+  log('🛣 Routes: 200$/case, 4$/tour. ⛰ Collines/forêts coûtent plus cher.','warn');
+  log('🌐 Importez/exportez de l\'électricité via l\'onglet ⚡ du panneau droit.','info');
+  log('💾 Sauvegardez avec le bouton en bas. Auto-save toutes les 5 tours.','info');
+}
+boot();
+</script>
+</body>
+</html>
