@@ -143,8 +143,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .tcb{background:var(--p2);border:1px solid var(--b2);color:var(--t1);font-family:var(--font);font-size:5px;padding:4px 5px;cursor:pointer;border-radius:2px;text-align:left;line-height:1.8}
 .tcb:hover{border-color:var(--acc2)}
 
-/* ELEC OVERLAY */
-#elec-overlay-btn{position:absolute;top:40px;right:8px;z-index:5}
+/* JOYSTICK */
+#joystick-wrap{position:absolute;bottom:12px;left:12px;z-index:10;display:none;flex-direction:column;gap:4px;align-items:center}
+#joystick-wrap.visible{display:flex}
+.jrow{display:flex;gap:4px}
+.jbtn{width:36px;height:36px;background:rgba(11,15,28,0.85);border:1.5px solid var(--b2);border-radius:6px;color:var(--t1);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;transition:background .1s}
+.jbtn:active,.jbtn.pressed{background:var(--b2);border-color:var(--acc)}
+.jbtn.zoom{background:rgba(20,25,50,0.85);font-size:11px;font-family:var(--font)}
+#toggle-joystick{position:absolute;bottom:12px;left:12px;z-index:11;background:rgba(11,15,28,0.75);border:1px solid var(--b2);color:var(--t2);font-family:var(--font);font-size:5px;padding:4px 7px;border-radius:3px;cursor:pointer}
+#toggle-joystick:active{border-color:var(--acc)}
 </style>
 </head>
 <body>
@@ -195,6 +202,25 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
       <button class="zbtn" onclick="zoom(1.25)" title="Zoom +">+</button>
       <button class="zbtn" onclick="zoom(0.8)" title="Zoom -">−</button>
       <button class="zbtn" onclick="resetView()" title="Reset">⌂</button>
+    </div>
+    <!-- Joystick tactile -->
+    <button id="toggle-joystick" onclick="toggleJoystick()" title="Afficher/masquer le joystick">🕹</button>
+    <div id="joystick-wrap">
+      <div class="jrow">
+        <div style="width:36px"></div>
+        <button class="jbtn" id="jup" ontouchstart="jStart('up')" ontouchend="jStop()" onmousedown="jStart('up')" onmouseup="jStop()">▲</button>
+        <div style="width:36px"></div>
+      </div>
+      <div class="jrow">
+        <button class="jbtn" id="jleft" ontouchstart="jStart('left')" ontouchend="jStop()" onmousedown="jStart('left')" onmouseup="jStop()">◀</button>
+        <button class="jbtn zoom" ontouchstart="jZoom(-1)" ontouchend="jStop()" onmousedown="jZoom(-1)" onmouseup="jStop()">−</button>
+        <button class="jbtn" id="jright" ontouchstart="jStart('right')" ontouchend="jStop()" onmousedown="jStart('right')" onmouseup="jStop()">▶</button>
+      </div>
+      <div class="jrow">
+        <div style="width:36px"></div>
+        <button class="jbtn" id="jdown" ontouchstart="jStart('down')" ontouchend="jStop()" onmousedown="jStart('down')" onmouseup="jStop()">▼</button>
+        <button class="jbtn zoom" ontouchstart="jZoom(1)" ontouchend="jStop()" onmousedown="jZoom(1)" onmouseup="jStop()">+</button>
+      </div>
     </div>
     <div id="map-overlay">
       <button class="mbtn act" id="btn-build" onclick="setMode('build')">🏗 BÂTIR</button>
@@ -318,8 +344,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
       <div class="tuto-body">
         <b>Carte :</b><br>
         • <b>Molette</b> — zoom avant/arrière<br>
-        • <b>Alt + clic-glisser</b> — déplacer la vue<br>
-        • <b>Survol</b> — infos sur la case<br>
+        • <b>Alt + clic-glisser</b> — déplacer la vue (souris)<br>
+        • <b>1 doigt glissé</b> — déplacer la vue (tablette)<br>
+        • <b>2 doigts</b> — pinch-to-zoom (tablette)<br>
+        • <b>Tap</b> — construire / interagir (tablette)<br>
+        • <b>Touches fléchées / WASD</b> — déplacer la vue (clavier)<br>
+        • <b>🕹 Joystick</b> — navigation tactile (bas-gauche de la carte)<br>
         • Boutons +/−/⌂ en haut à droite<br><br>
         <b>Vitesses :</b> ⏸ Pause · ▶ Lente · ▶▶ Normale · ▶▶▶ Rapide · ⚡ Turbo<br><br>
         <b>Panneaux :</b><br>
@@ -831,18 +861,84 @@ function setupCanvas(){
   canvas.addEventListener('mouseleave',()=>{document.getElementById('map-tooltip').style.display='none';G._hover=null;renderMap();});
   canvas.addEventListener('mousedown',onMDown);
   canvas.addEventListener('mouseup',onMUp);
-  // Wheel zoom
   canvas.addEventListener('wheel',onWheel,{passive:false});
-  // Touch
-  let lastDist=0;
-  canvas.addEventListener('touchstart',e=>{if(e.touches.length===2){lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:true});
-  canvas.addEventListener('touchmove',e=>{
-    if(e.touches.length===2){
-      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-      const s=d/lastDist;zoom(s,true);lastDist=d;e.preventDefault();
+
+  // ── TOUCH FULL SUPPORT ──
+  let _t1={x:0,y:0,cx:0,cy:0,moved:false,id:-1};
+  let _t2=null,_lastPinch=0;
+  let _touchRoadDrag=false;
+
+  canvas.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(e.touches.length===1){
+      const t=e.touches[0];
+      _t1={x:t.clientX,y:t.clientY,cx:G.camX,cy:G.camY,moved:false,id:t.identifier};
+      _t2=null;
+      if(G.mode==='road')_touchRoadDrag=true;
+    } else if(e.touches.length===2){
+      _touchRoadDrag=false;
+      _t2=e.touches[1];
+      _lastPinch=Math.hypot(e.touches[0].clientX-_t2.clientX,e.touches[0].clientY-_t2.clientY);
     }
   },{passive:false});
+
+  canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(e.touches.length===2){
+      // Pinch zoom
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      if(_lastPinch>0)zoom(d/_lastPinch);
+      _lastPinch=d;
+      // Also pan with midpoint
+      const mx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      const my=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      if(_t2._mx!==undefined){G.camX+=mx-_t2._mx;G.camY+=my-_t2._my;}
+      _t2._mx=mx;_t2._my=my;
+      renderMap();
+    } else if(e.touches.length===1){
+      const t=e.touches[0];
+      const dx=t.clientX-_t1.x,dy=t.clientY-_t1.y;
+      if(Math.abs(dx)>6||Math.abs(dy)>6)_t1.moved=true;
+      if(_touchRoadDrag&&G.mode==='road'&&_t1.moved){
+        // Road drawing drag
+        const fakeE={clientX:t.clientX,clientY:t.clientY};
+        const{r,c,ok}=getCell(fakeE);if(ok)doRoad(r,c);
+      } else if(_t1.moved){
+        // Pan
+        G.camX=_t1.cx+dx;G.camY=_t1.cy+dy;
+        renderMap();
+      }
+    }
+  },{passive:false});
+
+  canvas.addEventListener('touchend',e=>{
+    e.preventDefault();
+    if(e.changedTouches.length>0&&!_t1.moved&&e.touches.length===0){
+      // Tap = click action
+      const t=e.changedTouches[0];
+      const fakeE={clientX:t.clientX,clientY:t.clientY};
+      const{r,c,ok}=getCell(fakeE);
+      if(ok){
+        document.getElementById('map-tooltip').style.display='none';
+        if(G.mode==='demo'){
+          if(G.road[r][c]){G.road[r][c]=false;G.traffic[r][c]=0;log('Route démolie.','warn');}
+          else if(G.grid[r][c]){G.grid[r][c]='';log('Bâtiment démoli.','warn');}
+          _acc=null;simTraffic();recalc();renderMap();updateHUD();
+        } else if(G.mode==='info'){
+          showTip(fakeE,r,c);
+        } else if(G.mode==='road'){
+          doRoad(r,c);
+        } else {
+          doBuild(r,c);
+        }
+      }
+    }
+    _touchRoadDrag=false;
+    if(e.touches.length<2){_t2=null;_lastPinch=0;}
+  },{passive:false});
+
   resetView();
+  initJoystick();
 }
 function resizeCvs(){
   const w=document.getElementById('map-wrap');
@@ -1835,6 +1931,63 @@ function resetGame(){
 // ═══════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// JOYSTICK / KEYBOARD NAV
+// ═══════════════════════════════════════
+let _jTimer=null,_jDir=null,_jZoomDir=0;
+const J_SPEED=18; // pixels per frame
+const J_INTERVAL=30; // ms
+
+function initJoystick(){
+  // Auto-show joystick on touch devices
+  if('ontouchstart' in window||navigator.maxTouchPoints>0){
+    document.getElementById('joystick-wrap').classList.add('visible');
+    document.getElementById('toggle-joystick').style.display='none';
+  }
+  // Keyboard arrows
+  window.addEventListener('keydown',e=>{
+    const speed=e.shiftKey?J_SPEED*3:J_SPEED;
+    if(e.key==='ArrowLeft' ||e.key==='a'){G.camX+=speed;renderMap();e.preventDefault();}
+    if(e.key==='ArrowRight'||e.key==='d'){G.camX-=speed;renderMap();e.preventDefault();}
+    if(e.key==='ArrowUp'   ||e.key==='w'){G.camY+=speed;renderMap();e.preventDefault();}
+    if(e.key==='ArrowDown' ||e.key==='s'){G.camY-=speed;renderMap();e.preventDefault();}
+    if(e.key==='+'||e.key==='='){zoom(1.15);e.preventDefault();}
+    if(e.key==='-'){zoom(0.87);e.preventDefault();}
+    if(e.key==='0'||e.key==='Home'){resetView();e.preventDefault();}
+  });
+}
+
+function toggleJoystick(){
+  const w=document.getElementById('joystick-wrap');
+  const on=w.classList.toggle('visible');
+  document.getElementById('toggle-joystick').style.opacity=on?'1':'0.5';
+}
+
+function jStart(dir){
+  jStop();
+  _jDir=dir;
+  _jTimer=setInterval(()=>{
+    const speed=J_SPEED;
+    if(_jDir==='up')   G.camY+=speed;
+    if(_jDir==='down') G.camY-=speed;
+    if(_jDir==='left') G.camX+=speed;
+    if(_jDir==='right')G.camX-=speed;
+    renderMap();
+  },J_INTERVAL);
+}
+
+function jZoom(dir){
+  jStop();
+  _jZoomDir=dir;
+  _jTimer=setInterval(()=>{
+    zoom(_jZoomDir>0?1.04:0.96);
+  },J_INTERVAL);
+}
+
+function jStop(){
+  clearInterval(_jTimer);_jTimer=null;_jDir=null;_jZoomDir=0;
+}
+
 // ═══════════════════════════════════════
 // TUTORIAL
 // ═══════════════════════════════════════
