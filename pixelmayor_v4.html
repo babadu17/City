@@ -1102,13 +1102,24 @@ function doBuild(r,c){
   if(tc===Infinity){alert2('Impossible ici!');return;}
   const cost=buildCost(key)+tc;
   if(!check(cost))return;
+
+  // Snapshot BEFORE placement
+  const elecOkBefore=G.elecProd>=G.elecCons;
+
   G.money-=cost;G.grid[r][c]=key;
-  _acc=null;
-  buildAcc();
-  if(!hasAcc(r,c))alert2(`⚠️ ${b.n} sans route — efficacité 30%`);
-  if(b.elec&&!isElecPowered(r,c))alert2(`🔌 ${b.n} sans électricité — efficacité 50%`);
+  _acc=null;simTraffic();recalc(); // rebuilds elecGrid + calcElec
+
+  // Warnings based on state AFTER full recalc
+  const road_ok=hasAcc(r,c);
+  const elec_ok=!b.elec||isElecPowered(r,c);
+  const elecOkAfter=G.elecProd>=G.elecCons;
+
+  if(!road_ok)alert2(`⚠️ ${b.n} sans route — efficacité 30%`);
+  else if(b.elec&&!elec_ok)alert2(`🔌 ${b.n} sans électricité — efficacité 50%`);
+  if(elecOkBefore&&!elecOkAfter)alert2(`⚡ Consommation dépasse maintenant la production !`);
+
   log(`${b.n} construit. -${fmt(cost)}$`+(tc>0?` (dont ${fmt(tc)}$ terrain)`:''),(tc>0?'warn':'good'));
-  _acc=null;simTraffic();recalc();renderMap();updateHUD();if(G.stab===0)renderSidebar();
+  renderMap();updateHUD();if(G.stab===0)renderSidebar();
 }
 
 function showTip(e,r,c){
@@ -1193,8 +1204,9 @@ function nextTurn(){
   if(importCost>0)log(`⚡ Import élec: -${fmt(importCost)}$ (${G.elecImport}MW à ${G.elecImportPrice}$/MW)`,'warn');
   if(exportGain>0)log(`⚡ Export élec: +${fmt(exportGain)}$ (${Math.min(G.elecExport,surplus)}MW à ${G.elecExportPrice}$/MW)`,'good');
 
-  // Electricity check — HARD consequence
-  if(!calcElec()){
+  // Electricity check — HARD consequence (use values already set by recalc)
+  const elecSufficient = G.elecProd >= G.elecCons;
+  if(!elecSufficient){
     if(G.elecProd===0){
       G.blackout=true;
       if(G.turn>3)log('⚡ AUCUNE PRODUCTION ÉLECTRIQUE ! Tous les bâtiments tournent au ralenti.','bad');
@@ -1314,6 +1326,9 @@ function updateHUD(){
   else if(G.rtab===2)renderElecPane();
   else if(G.rtab===4)renderTaxPane();
   else if(G.rtab===5)renderPolPane();
+
+  // Refresh sidebar build list so cant/affordable state updates automatically
+  if(G.stab===0)renderSidebar();
 }
 
 // ═══════════════════════════════════════
