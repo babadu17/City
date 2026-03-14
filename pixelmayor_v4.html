@@ -143,15 +143,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 .tcb{background:var(--p2);border:1px solid var(--b2);color:var(--t1);font-family:var(--font);font-size:5px;padding:4px 5px;cursor:pointer;border-radius:2px;text-align:left;line-height:1.8}
 .tcb:hover{border-color:var(--acc2)}
 
-/* JOYSTICK */
-#joystick-wrap{position:absolute;bottom:12px;left:12px;z-index:10;display:none;flex-direction:column;gap:4px;align-items:center}
-#joystick-wrap.visible{display:flex}
-.jrow{display:flex;gap:4px}
-.jbtn{width:36px;height:36px;background:rgba(11,15,28,0.85);border:1.5px solid var(--b2);border-radius:6px;color:var(--t1);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;transition:background .1s}
-.jbtn:active,.jbtn.pressed{background:var(--b2);border-color:var(--acc)}
-.jbtn.zoom{background:rgba(20,25,50,0.85);font-size:11px;font-family:var(--font)}
-#toggle-joystick{position:absolute;bottom:12px;left:12px;z-index:11;background:rgba(11,15,28,0.75);border:1px solid var(--b2);color:var(--t2);font-family:var(--font);font-size:5px;padding:4px 7px;border-radius:3px;cursor:pointer}
-#toggle-joystick:active{border-color:var(--acc)}
 </style>
 </head>
 <body>
@@ -202,25 +193,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
       <button class="zbtn" onclick="zoom(1.25)" title="Zoom +">+</button>
       <button class="zbtn" onclick="zoom(0.8)" title="Zoom -">−</button>
       <button class="zbtn" onclick="resetView()" title="Reset">⌂</button>
-    </div>
-    <!-- Joystick tactile -->
-    <button id="toggle-joystick" onclick="toggleJoystick()" title="Afficher/masquer le joystick">🕹</button>
-    <div id="joystick-wrap">
-      <div class="jrow">
-        <div style="width:36px"></div>
-        <button class="jbtn" id="jup" ontouchstart="jStart('up')" ontouchend="jStop()" onmousedown="jStart('up')" onmouseup="jStop()">▲</button>
-        <div style="width:36px"></div>
-      </div>
-      <div class="jrow">
-        <button class="jbtn" id="jleft" ontouchstart="jStart('left')" ontouchend="jStop()" onmousedown="jStart('left')" onmouseup="jStop()">◀</button>
-        <button class="jbtn zoom" ontouchstart="jZoom(-1)" ontouchend="jStop()" onmousedown="jZoom(-1)" onmouseup="jStop()">−</button>
-        <button class="jbtn" id="jright" ontouchstart="jStart('right')" ontouchend="jStop()" onmousedown="jStart('right')" onmouseup="jStop()">▶</button>
-      </div>
-      <div class="jrow">
-        <div style="width:36px"></div>
-        <button class="jbtn" id="jdown" ontouchstart="jStart('down')" ontouchend="jStop()" onmousedown="jStart('down')" onmouseup="jStop()">▼</button>
-        <button class="jbtn zoom" ontouchstart="jZoom(1)" ontouchend="jStop()" onmousedown="jZoom(1)" onmouseup="jStop()">+</button>
-      </div>
     </div>
     <div id="map-overlay">
       <button class="mbtn act" id="btn-build" onclick="setMode('build')">🏗 BÂTIR</button>
@@ -938,7 +910,6 @@ function setupCanvas(){
   },{passive:false});
 
   resetView();
-  initJoystick();
 }
 function resizeCvs(){
   const w=document.getElementById('map-wrap');
@@ -1931,62 +1902,6 @@ function resetGame(){
 // ═══════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════
-// ═══════════════════════════════════════
-// JOYSTICK / KEYBOARD NAV
-// ═══════════════════════════════════════
-let _jTimer=null,_jDir=null,_jZoomDir=0;
-const J_SPEED=18; // pixels per frame
-const J_INTERVAL=30; // ms
-
-function initJoystick(){
-  // Auto-show joystick on touch devices
-  if('ontouchstart' in window||navigator.maxTouchPoints>0){
-    document.getElementById('joystick-wrap').classList.add('visible');
-    document.getElementById('toggle-joystick').style.display='none';
-  }
-  // Keyboard arrows
-  window.addEventListener('keydown',e=>{
-    const speed=e.shiftKey?J_SPEED*3:J_SPEED;
-    if(e.key==='ArrowLeft' ||e.key==='a'){G.camX+=speed;renderMap();e.preventDefault();}
-    if(e.key==='ArrowRight'||e.key==='d'){G.camX-=speed;renderMap();e.preventDefault();}
-    if(e.key==='ArrowUp'   ||e.key==='w'){G.camY+=speed;renderMap();e.preventDefault();}
-    if(e.key==='ArrowDown' ||e.key==='s'){G.camY-=speed;renderMap();e.preventDefault();}
-    if(e.key==='+'||e.key==='='){zoom(1.15);e.preventDefault();}
-    if(e.key==='-'){zoom(0.87);e.preventDefault();}
-    if(e.key==='0'||e.key==='Home'){resetView();e.preventDefault();}
-  });
-}
-
-function toggleJoystick(){
-  const w=document.getElementById('joystick-wrap');
-  const on=w.classList.toggle('visible');
-  document.getElementById('toggle-joystick').style.opacity=on?'1':'0.5';
-}
-
-function jStart(dir){
-  jStop();
-  _jDir=dir;
-  _jTimer=setInterval(()=>{
-    const speed=J_SPEED;
-    if(_jDir==='up')   G.camY+=speed;
-    if(_jDir==='down') G.camY-=speed;
-    if(_jDir==='left') G.camX+=speed;
-    if(_jDir==='right')G.camX-=speed;
-    renderMap();
-  },J_INTERVAL);
-}
-
-function jZoom(dir){
-  jStop();
-  _jZoomDir=dir;
-  _jTimer=setInterval(()=>{
-    zoom(_jZoomDir>0?1.04:0.96);
-  },J_INTERVAL);
-}
-
-function jStop(){
-  clearInterval(_jTimer);_jTimer=null;_jDir=null;_jZoomDir=0;
-}
 
 // ═══════════════════════════════════════
 // TUTORIAL
